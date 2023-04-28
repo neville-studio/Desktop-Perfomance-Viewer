@@ -174,9 +174,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         osVersion = "操作系统版本：" + getOSFullName();
         SetWindowText(OSStatic, multi_Byte_To_Wide_Char(osVersion));
         SendMessage(OSStatic, WM_SETFONT, (WPARAM)hFont, NULL);
+        
         std::string CPUInfo;
         CPUInfo = "CPU：" + getCPUInformation();
-        
         HWND CPUStatic = CreateWindow(
             L"static",			//静态文本框的类名
             L"CPU：",		//控件的文本
@@ -187,10 +187,79 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             hInst,		 //当前程序实例句柄
             NULL
         );
-        
         SetWindowText(CPUStatic, multi_Byte_To_Wide_Char(CPUInfo));
         SendMessage(CPUStatic, WM_SETFONT, (WPARAM)hFont, NULL);
+        
+        std::string MemoryInfo;
+        MemoryInfo = "内存：" + getMemoryInfo();
+        HWND MemoryStatic = CreateWindow(
+            L"static",			//静态文本框的类名
+            L"内存：",		//控件的文本
+            WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
+            0 /*X坐标*/, 20+(44*getCPUCount()) /*Y坐标*/, workSpace.right / 2 - workSpace.left / 2 /*宽度*/,  22*getMemoryCount()/*高度*/,
+            hWnd,		 //父窗口句柄
+            (HMENU)1,	 //为控件指定一个唯一标识符
+            hInst,		 //当前程序实例句柄
+            NULL
+        );
+        SetWindowText(MemoryStatic, multi_Byte_To_Wide_Char(MemoryInfo));
+        SendMessage(MemoryStatic, WM_SETFONT, (WPARAM)hFont, NULL);
 
+
+        std::string DiskInfo;
+        DiskInfo = "硬盘：" + getDiskInfo();
+        HWND DiskStatic = CreateWindow(
+            L"static",			//静态文本框的类名
+            L"硬盘：",		//控件的文本
+            WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
+            0 /*X坐标*/, 20 + (44 * getCPUCount())+ 22*getMemoryCount() /*Y坐标*/, workSpace.right / 2 - workSpace.left / 2 /*宽度*/, 22 * getDiskCount()/*高度*/,
+            hWnd,		 //父窗口句柄
+            (HMENU)1,	 //为控件指定一个唯一标识符
+            hInst,		 //当前程序实例句柄
+            NULL
+        );
+        SetWindowText(DiskStatic, multi_Byte_To_Wide_Char(DiskInfo));
+        SendMessage(DiskStatic, WM_SETFONT, (WPARAM)hFont, NULL);
+
+        std::string VideoDriverInfo;
+        VideoDriverInfo = "显卡信息：" + getVideoDriverInfo();
+        HWND VideoDriverStatic = CreateWindow(
+            L"static",			//静态文本框的类名
+            L"显卡信息：",		//控件的文本
+            WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
+            0 /*X坐标*/, 20 + (44 * getCPUCount()) + 22 * getMemoryCount()+22*getDiskCount() /*Y坐标*/, workSpace.right / 2 - workSpace.left / 2 /*宽度*/, 22 * getVideoDriverCount()/*高度*/,
+            hWnd,		 //父窗口句柄
+            (HMENU)1,	 //为控件指定一个唯一标识符
+            hInst,		 //当前程序实例句柄
+            NULL
+        );
+        SetWindowText(VideoDriverStatic, multi_Byte_To_Wide_Char(VideoDriverInfo));
+        SendMessage(VideoDriverStatic, WM_SETFONT, (WPARAM)hFont, NULL);
+
+
+        std::string ConnectedNetworkInfo;
+        ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
+        HWND ConnectedNetworkStatic = CreateWindow(
+            L"static",			//静态文本框的类名
+            L"显卡信息：",		//控件的文本
+            WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
+            0 /*X坐标*/, 20 + (44 * getCPUCount()) + 22 * getMemoryCount() + 22 * getDiskCount()+ 22 * getVideoDriverCount()
+            /*Y坐标*/, workSpace.right / 2 - workSpace.left / 2 /*宽度*/, 22 + 88 * getConnectedNetworkDriverCount()/*高度*/,
+            hWnd,		 //父窗口句柄
+            (HMENU)1,	 //为控件指定一个唯一标识符
+            hInst,		 //当前程序实例句柄
+            NULL
+        );
+        SetWindowText(ConnectedNetworkStatic, multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
+        SendMessage(ConnectedNetworkStatic, WM_SETFONT, (WPARAM)hFont, NULL);
+        SystemParametersInfo(SPI_SETFONTSMOOTHING,
+            TRUE,
+            0,
+            SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+        SystemParametersInfo(SPI_SETFONTSMOOTHINGTYPE,
+            0,
+            (PVOID)FE_FONTSMOOTHINGCLEARTYPE,
+            SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
     }
 
     case WM_COMMAND:
