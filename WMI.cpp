@@ -1,0 +1,367 @@
+#define _WIN32_DCOM
+#include <iostream>
+using namespace std;
+#include <comdef.h>
+#include <Wbemidl.h>
+#include "WMI.h"
+#include <tchar.h>
+
+#pragma comment(lib, "wbemuuid.lib")
+
+//string getUBRVersion()
+//{
+//    if (IsWindows7SP1OrGreater())
+//    {
+//
+//        
+//        LPCWSTR sw = _T("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\");//_T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Bandizip.exe");
+//        wprintf(L"SW is %s\n", sw);
+//        if (ERROR_SUCCESS == RegOpenKey(HKEY_LOCAL_MACHINE, sw, &hRetKey))
+//        {
+//            return true;
+//        }
+//        printf("OpenRegKey return is false!\n");
+//        return false;
+//        
+//
+//    }else return ""
+//}
+
+void wcharTochar(const wchar_t* wchar, char* chr, int length)
+{
+    WideCharToMultiByte(CP_ACP, 0, wchar, -1,
+        chr, length, NULL, NULL);
+}
+
+bool OpenRegKey(HKEY& hRetKey)
+{
+    LPCWSTR sw = _T("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion");//_T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Bandizip.exe");
+    wprintf(L"SW is %s\n", sw);
+    if (ERROR_SUCCESS == RegOpenKey(HKEY_LOCAL_MACHINE, sw, &hRetKey))
+    {
+        return true;
+    }
+    printf("OpenRegKey return is false!\n");
+    return false;
+}
+
+string QueryRegKey(LPCWSTR strSubKey, LPCWSTR strValueName)//这里是传3个参数
+{
+    DWORD dwType = REG_DWORD;//定义数据类型
+    DWORD dwLen = MAX_PATH;
+
+    DWORD data;
+    HKEY hKey;
+    HKEY hSubKey;
+    if (OpenRegKey(hKey))
+    {
+        if (ERROR_SUCCESS == RegOpenKey(HKEY_LOCAL_MACHINE, strSubKey, &hSubKey))
+        {
+            TCHAR buf[256] = { 0 };
+
+            if (ERROR_SUCCESS == RegQueryValueEx(hSubKey, L"UBR", 0, &dwType, (LPBYTE)&data, &dwLen))
+            {
+
+                return to_string(data);
+            }
+        }
+        RegCloseKey(hKey); //关闭注册表
+    }
+
+    return "";
+}
+
+
+
+HRESULT hres;
+IWbemServices* pSvc = NULL;
+IWbemLocator* pLoc = NULL;
+BOOL isWMIOpened = false;
+IEnumWbemClassObject* pEnumerator = NULL;
+BOOL openWMI()
+{
+    // Step 1: --------------------------------------------------
+    // Initialize COM. ------------------------------------------
+
+    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (FAILED(hres))
+    {
+        cout << "Failed to initialize COM library. Error code = 0x"
+            << hex << hres << endl;
+        return FALSE;                  // Program has failed.
+    }
+
+    // Step 2: --------------------------------------------------
+    // Set general COM security levels --------------------------
+
+    hres = CoInitializeSecurity(
+        NULL,
+        -1,                          // COM authentication
+        NULL,                        // Authentication services
+        NULL,                        // Reserved
+        RPC_C_AUTHN_LEVEL_DEFAULT,   // Default authentication 
+        RPC_C_IMP_LEVEL_IMPERSONATE, // Default Impersonation  
+        NULL,                        // Authentication info
+        EOAC_NONE,                   // Additional capabilities 
+        NULL                         // Reserved
+    );
+
+
+    if (FAILED(hres))
+    {
+        cout << "Failed to initialize security. Error code = 0x"
+            << hex << hres << endl;
+        CoUninitialize();
+        return FALSE;                    // Program has failed.
+    }
+
+    // Step 3: ---------------------------------------------------
+    // Obtain the initial locator to WMI -------------------------
+
+    
+
+    hres = CoCreateInstance(
+        CLSID_WbemLocator,
+        0,
+        CLSCTX_INPROC_SERVER,
+        IID_IWbemLocator, (LPVOID*)&pLoc);
+
+    if (FAILED(hres))
+    {
+        cout << "Failed to create IWbemLocator object."
+            << " Err code = 0x"
+            << hex << hres << endl;
+        CoUninitialize();
+        return FALSE;                 // Program has failed.
+    }
+
+    // Step 4: -----------------------------------------------------
+    // Connect to WMI through the IWbemLocator::ConnectServer method
+
+    
+
+    // Connect to the root\cimv2 namespace with
+    // the current user and obtain pointer pSvc
+    // to make IWbemServices calls.
+    hres = pLoc->ConnectServer(
+        _bstr_t(L"ROOT\\CIMV2"), // Object path of WMI namespace
+        NULL,                    // User name. NULL = current user
+        NULL,                    // User password. NULL = current
+        0,                       // Locale. NULL indicates current
+        NULL,                    // Security flags.
+        0,                       // Authority (for example, Kerberos)
+        0,                       // Context object 
+        &pSvc                    // pointer to IWbemServices proxy
+    );
+
+    if (FAILED(hres))
+    {
+        cout << "Could not connect. Error code = 0x"
+            << hex << hres << endl;
+        pLoc->Release();
+        CoUninitialize();
+        return FALSE;                // Program has failed.
+    }
+
+    cout << "Connected to ROOT\\CIMV2 WMI namespace" << endl;
+
+    return TRUE;
+}
+BOOL closeWMI()
+{
+    pSvc->Release();
+    pLoc->Release();
+    pEnumerator->Release();
+    CoUninitialize();
+    return TRUE;
+}
+int CPUCount = 0;
+int getCPUCount() {
+    return CPUCount;
+};
+string getCPUInformation()
+{
+    if (!isWMIOpened)isWMIOpened = openWMI();
+    if (!isWMIOpened)return "Some Error occored.";
+
+    // Step 5: --------------------------------------------------
+    // Set security levels on the proxy -------------------------
+
+    hres = CoSetProxyBlanket(
+        pSvc,                        // Indicates the proxy to set
+        RPC_C_AUTHN_WINNT,           // RPC_C_AUTHN_xxx
+        RPC_C_AUTHZ_NONE,            // RPC_C_AUTHZ_xxx
+        NULL,                        // Server principal name 
+        RPC_C_AUTHN_LEVEL_CALL,      // RPC_C_AUTHN_LEVEL_xxx 
+        RPC_C_IMP_LEVEL_IMPERSONATE, // RPC_C_IMP_LEVEL_xxx
+        NULL,                        // client identity
+        EOAC_NONE                    // proxy capabilities 
+    );
+
+    if (FAILED(hres))
+    {
+        cout << "Could not set proxy blanket. Error code = 0x"
+            << hex << hres << endl;
+        pSvc->Release();
+        pLoc->Release();
+        CoUninitialize();
+        return "发生错误，代码：0x" + hres;               // Program has failed.
+    }
+
+    // Step 6: --------------------------------------------------
+    // Use the IWbemServices pointer to make requests of WMI ----
+
+    // For example, get the name of the operating system
+
+    hres = pSvc->ExecQuery(
+        bstr_t("WQL"),
+        bstr_t("SELECT * FROM Win32_Processor"),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+        NULL,
+        &pEnumerator);
+
+    if (FAILED(hres))
+    {
+        cout << "Query for operating system name failed."
+            << " Error code = 0x"
+            << hex << hres << endl;
+        pSvc->Release();
+        pLoc->Release();
+        CoUninitialize();
+        return "发生错误，代码：0x" + hres;               // Program has failed.
+    }
+
+    // Step 7: -------------------------------------------------
+    // Get the data from the query in step 6 -------------------
+
+    IWbemClassObject* pclsObj = NULL;
+    ULONG uReturn = 0;
+    string result;
+
+    while (pEnumerator)
+    {
+        HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1,
+            &pclsObj, &uReturn);
+
+        if (0 == uReturn)
+        {
+            break;
+        }
+
+        VARIANT vtProp;
+
+        VariantInit(&vtProp);
+        // Get the value of the Name property
+        hr = pclsObj->Get(L"Name", 0, &vtProp, 0, 0);
+        result = to_string(CPUCount) + "：" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
+        hr = pclsObj->Get(L"MaxClockSpeed", 0, &vtProp, 0, 0);
+        result += " @"+to_string((int)vtProp.lVal/1000)+"."+ to_string((int)vtProp.lVal / 10 % 100)+"GHz";
+        hr = pclsObj->Get(L"NumberOfCores", 0, &vtProp, 0, 0);
+        result += " " + to_string(vtProp.lVal) + "核心";
+        hr = pclsObj->Get(L"NumberOfLogicalProcessors", 0, &vtProp, 0, 0);
+        result += " " + to_string(vtProp.lVal) + "逻辑处理器";
+        hr = pclsObj->Get(L"Description", 0, &vtProp, 0, 0);
+        result += "\n                         "+wide_Char_To_Multi_Byte(vtProp.bstrVal) + "";
+        VariantClear(&vtProp);
+        CPUCount++;
+        pclsObj->Release();
+    }
+
+    // Cleanup
+    // ========
+
+    return result;   // Program successfully completed.
+
+}
+string getOSFullName()
+{
+    if (!isWMIOpened)isWMIOpened = openWMI();
+    if (!isWMIOpened)return "Some Error occored.";
+    
+    // Step 5: --------------------------------------------------
+    // Set security levels on the proxy -------------------------
+
+    hres = CoSetProxyBlanket(
+        pSvc,                        // Indicates the proxy to set
+        RPC_C_AUTHN_WINNT,           // RPC_C_AUTHN_xxx
+        RPC_C_AUTHZ_NONE,            // RPC_C_AUTHZ_xxx
+        NULL,                        // Server principal name 
+        RPC_C_AUTHN_LEVEL_CALL,      // RPC_C_AUTHN_LEVEL_xxx 
+        RPC_C_IMP_LEVEL_IMPERSONATE, // RPC_C_IMP_LEVEL_xxx
+        NULL,                        // client identity
+        EOAC_NONE                    // proxy capabilities 
+    );
+
+    if (FAILED(hres))
+    {
+        cout << "Could not set proxy blanket. Error code = 0x"
+            << hex << hres << endl;
+        pSvc->Release();
+        pLoc->Release();
+        CoUninitialize();
+        return "发生错误，代码：0x" + hres;               // Program has failed.
+    }
+
+    // Step 6: --------------------------------------------------
+    // Use the IWbemServices pointer to make requests of WMI ----
+
+    // For example, get the name of the operating system
+    
+    hres = pSvc->ExecQuery(
+        bstr_t("WQL"),
+        bstr_t("SELECT * FROM Win32_OperatingSystem"),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+        NULL,
+        &pEnumerator);
+
+    if (FAILED(hres))
+    {
+        cout << "Query for operating system name failed."
+            << " Error code = 0x"
+            << hex << hres << endl;
+        pSvc->Release();
+        pLoc->Release();
+        CoUninitialize();
+        return "发生错误，代码：0x" + hres;               // Program has failed.
+    }
+
+    // Step 7: -------------------------------------------------
+    // Get the data from the query in step 6 -------------------
+
+    IWbemClassObject* pclsObj = NULL;
+    ULONG uReturn = 0;
+    string result;
+    
+    while (pEnumerator)
+    {
+        HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1,
+            &pclsObj, &uReturn);
+
+        if (0 == uReturn)
+        {
+            break;
+        }
+
+        VARIANT vtProp;
+
+        VariantInit(&vtProp);
+        // Get the value of the Name property
+        hr = pclsObj->Get(L"Caption", 0, &vtProp, 0, 0);
+        wcout << " OS Name : " << vtProp.bstrVal << endl;
+        result = wide_Char_To_Multi_Byte(vtProp.bstrVal);
+        hr = pclsObj->Get(L"Version", 0, &vtProp, 0, 0);
+        result += "（内核版本:" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
+        if (IsWindows7OrGreater())
+            result += "."+QueryRegKey(L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", L"UBR");
+        result+="）";
+        VariantClear(&vtProp);
+
+        pclsObj->Release();
+    }
+
+    // Cleanup
+    // ========
+    
+    return result;   // Program successfully completed.
+
+}
