@@ -13,7 +13,14 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 HINSTANCE hInst;                                // 当前实例
 WCHAR szTitle[MAX_LOADSTRING];                  // 标题栏文本
 WCHAR szWindowClass[MAX_LOADSTRING];            // 主窗口类名
-HFONT hFont;
+HFONT hFont;                                    // 全局字体
+HWND OSStatic,CPUStatic, MemoryStatic;          // 全局控件(OS版本、CPU信息、内存信息)
+HWND DiskStatic, VideoDriverStatic, ConnectedNetworkStatic;
+                                                // 全局控件（硬盘、显卡、已连接的网卡信息）
+HWND hWndMain;                                  //主窗口
+HANDLE refrushThread;                         // 更新线程
+DWORD ThreadStatus;
+HANDLE globalHeap;                              //堆
 // 此代码模块中包含的函数的前向声明:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
@@ -81,19 +88,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.lpszMenuName = NULL;
     wcex.lpszClassName = szWindowClass;
     wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-    //wcex.style          = NULL;
-    //wcex.lpfnWndProc    = WndProc;
-    //wcex.cbClsExtra     = 0;
-    //wcex.cbWndExtra     = 0;
-    //wcex.hInstance      = hInstance;
-
-    //wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_DPV));
-    //wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    //wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    //wcex.lpszMenuName   = NULL;
-    //wcex.lpszClassName  = szWindowClass;
-    //wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-    //wcex.hbrBackground = CreateSolidBrush(RGB(251, 255, 242));
 
     return RegisterClassExW(&wcex);
 }
@@ -129,6 +123,161 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
+
+
+
+
+
+void updateInfo(int param)
+{
+    HWND hWnd = hWndMain;
+    RECT hWndSize;
+    
+    GetWindowRect(hWnd, &hWndSize);
+    //UPDATEINFOPARA a = (UPDATEINFOPARA)param;
+    INT16 findDevice = param;
+    if (findDevice == -1) {
+        wchar_t* deleteStr;
+        std::string osVersion;
+        osVersion = "操作系统版本：" + getOSFullName();
+        SetWindowText(OSStatic, deleteStr = multi_Byte_To_Wide_Char(osVersion));
+        //MoveWindow(OSStatic, 0, 0, hWndSize.right - hWndSize.left, 22, TRUE);
+        delete[]deleteStr;
+        std::string CPUInfo;
+        CPUInfo = "CPU：" + getCPUInformation();
+        SetWindowText(CPUStatic, deleteStr = multi_Byte_To_Wide_Char(CPUInfo));
+        //MoveWindow(CPUStatic, 0, 22, hWndSize.right - hWndSize.left, 44 * getCPUCount(), TRUE);
+        delete[] deleteStr;
+        std::string MemoryInfo;
+        MemoryInfo = "内存：" + getMemoryInfo();
+        SetWindowText(MemoryStatic, deleteStr = multi_Byte_To_Wide_Char(MemoryInfo));
+        //MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount(), hWndSize.right - hWndSize.left, 22 * getMemoryCount(), TRUE);
+        delete[] deleteStr;
+        std::string VideoDriverInfo;
+        VideoDriverInfo = "显卡信息：" + getVideoDriverInfo();
+        SetWindowText(VideoDriverStatic, deleteStr = multi_Byte_To_Wide_Char(VideoDriverInfo));
+        delete[] deleteStr;
+        //MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
+        std::string DiskInfo;
+        DiskInfo = "硬盘：" + getDiskInfo();
+        SetWindowText(DiskStatic, deleteStr = multi_Byte_To_Wide_Char(DiskInfo));
+        delete[] deleteStr;
+        // MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
+        std::string ConnectedNetworkInfo;
+        ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
+        SetWindowText(ConnectedNetworkStatic, deleteStr = multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
+        delete[] deleteStr;
+
+        //MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
+        MoveWindow(OSStatic, 0, 0, hWndSize.right - hWndSize.left, 22, TRUE);
+        MoveWindow(CPUStatic, 0, 22, hWndSize.right - hWndSize.left, 44 * getCPUCount(), TRUE);
+        MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount(), hWndSize.right - hWndSize.left, 22 * getMemoryCount(), TRUE);
+        MoveWindow(DiskStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
+        MoveWindow(VideoDriverStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
+        MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
+        
+        //UpdateWindow(hWnd);
+        //UpdateWindow(hWnd);
+    }
+    else if (findDevice == 1)
+    {
+        std::string ConnectedNetworkInfo;
+        std::string original;
+        wchar_t* deleteStr;
+        ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
+        int length = GetWindowTextLength(ConnectedNetworkStatic);
+        wchar_t *wcctxt = new wchar_t[length+1];
+        GetWindowText(ConnectedNetworkStatic, wcctxt, length+1);
+        original = wide_Char_To_Multi_Byte(wcctxt);
+        if (original.compare(ConnectedNetworkInfo))
+        {
+            MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
+            SetWindowText(ConnectedNetworkStatic, deleteStr = multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
+            delete[] deleteStr;
+        }
+        delete[] wcctxt;
+        MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
+    }
+    else if (findDevice == 2)
+    {
+        std::string VideoDriverInfo;
+        VideoDriverInfo = "显卡信息：" + getVideoDriverInfo();
+        
+        std::string DiskInfo;
+        DiskInfo = "硬盘：" + getDiskInfo();
+        
+        // MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
+        std::string ConnectedNetworkInfo;
+        ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
+        wchar_t* deleteStr;
+        MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
+        MoveWindow(VideoDriverStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
+        MoveWindow(DiskStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
+        SetWindowText(VideoDriverStatic, deleteStr=multi_Byte_To_Wide_Char(VideoDriverInfo));
+        delete[] deleteStr;
+        SetWindowText(DiskStatic, deleteStr = multi_Byte_To_Wide_Char(DiskInfo));
+        delete[] deleteStr;
+        SetWindowText(ConnectedNetworkStatic, deleteStr = multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
+        delete[] deleteStr;
+        
+    }
+    UpdateWindow(hWnd);
+    
+}
+
+int needUpdate = 1;
+
+
+DWORD WINAPI checkUpdate(LPVOID param)
+{
+    int count = 0;
+    while (1)
+    {
+        if (needUpdate == 2)
+        {
+            updateInfo(1);
+            needUpdate = 0;
+        }
+        else if (needUpdate == 1)
+        {
+            updateInfo(-1);
+            needUpdate = 0;
+        }
+        else if (needUpdate == 3)
+        {
+            updateInfo(2);
+            needUpdate = 0;
+        }else
+        Sleep(2000);
+        _CrtDumpMemoryLeaks();
+        count++;
+        if (count %2 == 0)
+        {
+            if(needUpdate==0)
+            needUpdate = 2;
+            
+        }
+        else if (count == 15)
+        {
+            count = 0;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //
 //  函数: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -145,12 +294,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
     {
-        //LONG Style = GetWindowLong(hWnd, GWL_EXSTYLE); //hWnd是主窗口句柄
-        //SetWindowLong(hWnd, GWL_EXSTYLE, Style | WS_EX_LAYERED);
-        //SetLayeredWindowAttributes(hWnd, 0, 0, LWA_ALPHA);
-       /* LONG ret = GetWindowLong(hWnd, GWL_EXSTYLE);
-        ret = ret | WS_EX_LAYERED;
-        SetWindowLong(hWnd, GWL_EXSTYLE, ret);*/
+        globalHeap = GetProcessHeap(); 
+        //SetProcessWorkingSetSize()
         SetProcessDPIAware();
         RECT workSpace;
         SystemParametersInfo(SPI_GETWORKAREA, 0, (PVOID)&workSpace, 0);
@@ -160,7 +305,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             FF_DONTCARE, TEXT("微软雅黑")
         );
         MoveWindow(hWnd, workSpace.right / 2 - workSpace.left / 2, 50, workSpace.right / 2 - workSpace.left / 2, workSpace.bottom - workSpace.top-50,TRUE);
-        HWND OSStatic = CreateWindow(
+        OSStatic = CreateWindow(
             L"static",			//静态文本框的类名
             L"操作系统版本",		//控件的文本
             WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
@@ -170,14 +315,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             hInst,		 //当前程序实例句柄
             NULL
         );
-        std::string osVersion;
+        /*std::string osVersion;
         osVersion = "操作系统版本：" + getOSFullName();
-        SetWindowText(OSStatic, multi_Byte_To_Wide_Char(osVersion));
+        SetWindowText(OSStatic, multi_Byte_To_Wide_Char(osVersion));*/
         SendMessage(OSStatic, WM_SETFONT, (WPARAM)hFont, NULL);
         
-        std::string CPUInfo;
-        CPUInfo = "CPU：" + getCPUInformation();
-        HWND CPUStatic = CreateWindow(
+       /* std::string CPUInfo;
+        CPUInfo = "CPU：" + getCPUInformation();*/
+        CPUStatic = CreateWindow(
             L"static",			//静态文本框的类名
             L"CPU：",		//控件的文本
             WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
@@ -187,12 +332,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             hInst,		 //当前程序实例句柄
             NULL
         );
-        SetWindowText(CPUStatic, multi_Byte_To_Wide_Char(CPUInfo));
+        //SetWindowText(CPUStatic, multi_Byte_To_Wide_Char(CPUInfo));
         SendMessage(CPUStatic, WM_SETFONT, (WPARAM)hFont, NULL);
         
-        std::string MemoryInfo;
-        MemoryInfo = "内存：" + getMemoryInfo();
-        HWND MemoryStatic = CreateWindow(
+        //std::string MemoryInfo;
+        //MemoryInfo = "内存：" + getMemoryInfo();
+        MemoryStatic = CreateWindow(
             L"static",			//静态文本框的类名
             L"内存：",		//控件的文本
             WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
@@ -202,13 +347,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             hInst,		 //当前程序实例句柄
             NULL
         );
-        SetWindowText(MemoryStatic, multi_Byte_To_Wide_Char(MemoryInfo));
+        //SetWindowText(MemoryStatic, multi_Byte_To_Wide_Char(MemoryInfo));
         SendMessage(MemoryStatic, WM_SETFONT, (WPARAM)hFont, NULL);
 
 
-        std::string DiskInfo;
-        DiskInfo = "硬盘：" + getDiskInfo();
-        HWND DiskStatic = CreateWindow(
+        //std::string DiskInfo;
+        //DiskInfo = "硬盘：" + getDiskInfo();
+        DiskStatic = CreateWindow(
             L"static",			//静态文本框的类名
             L"硬盘：",		//控件的文本
             WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
@@ -218,12 +363,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             hInst,		 //当前程序实例句柄
             NULL
         );
-        SetWindowText(DiskStatic, multi_Byte_To_Wide_Char(DiskInfo));
+        //SetWindowText(DiskStatic, multi_Byte_To_Wide_Char(DiskInfo));
         SendMessage(DiskStatic, WM_SETFONT, (WPARAM)hFont, NULL);
 
-        std::string VideoDriverInfo;
-        VideoDriverInfo = "显卡信息：" + getVideoDriverInfo();
-        HWND VideoDriverStatic = CreateWindow(
+        //std::string VideoDriverInfo;
+        //VideoDriverInfo = "显卡信息：" + getVideoDriverInfo();
+        VideoDriverStatic = CreateWindow(
             L"static",			//静态文本框的类名
             L"显卡信息：",		//控件的文本
             WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
@@ -233,13 +378,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             hInst,		 //当前程序实例句柄
             NULL
         );
-        SetWindowText(VideoDriverStatic, multi_Byte_To_Wide_Char(VideoDriverInfo));
+        //SetWindowText(VideoDriverStatic, multi_Byte_To_Wide_Char(VideoDriverInfo));
         SendMessage(VideoDriverStatic, WM_SETFONT, (WPARAM)hFont, NULL);
 
 
-        std::string ConnectedNetworkInfo;
-        ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
-        HWND ConnectedNetworkStatic = CreateWindow(
+        //std::string ConnectedNetworkInfo;
+        //ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
+        ConnectedNetworkStatic = CreateWindow(
             L"static",			//静态文本框的类名
             L"显卡信息：",		//控件的文本
             WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
@@ -250,8 +395,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             hInst,		 //当前程序实例句柄
             NULL
         );
-        SetWindowText(ConnectedNetworkStatic, multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
+        //SetWindowText(ConnectedNetworkStatic, multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
         SendMessage(ConnectedNetworkStatic, WM_SETFONT, (WPARAM)hFont, NULL);
+        hWndMain = hWnd;
+        int control = -1;
+           //updateInfo(&a);
+        refrushThread = CreateThread(NULL, 0, checkUpdate, NULL, 0, &ThreadStatus);
         SystemParametersInfo(SPI_SETFONTSMOOTHING,
             TRUE,
             0,
@@ -290,12 +439,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             
         }
         break;
+    case WM_DEVICECHANGE:
+    {
+    //updateInfo(&a);
+        needUpdate = 3;
+        
+    }   break;
     case WM_CTLCOLORSTATIC:
     {
         HDC hdc = (HDC)wParam;
         SetTextColor(hdc, RGB(255,255,254));
+
         SetBkMode(hdc, TRANSPARENT);
-        return (LRESULT)GetStockObject(NULL_BRUSH);
+        return (LRESULT)GetStockObject(WHITE_BRUSH);
     }
     break;
     case WM_DESTROY:

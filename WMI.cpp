@@ -39,6 +39,7 @@ bool OpenRegKey(HKEY& hRetKey)
     wprintf(L"SW is %s\n", sw);
     if (ERROR_SUCCESS == RegOpenKey(HKEY_LOCAL_MACHINE, sw, &hRetKey))
     {
+        
         return true;
     }
     printf("OpenRegKey return is false!\n");
@@ -50,7 +51,7 @@ string QueryRegKey(LPCWSTR strSubKey, LPCWSTR strValueName)//这里是传3个参数
     DWORD dwType = REG_DWORD;//定义数据类型
     DWORD dwLen = MAX_PATH;
 
-    DWORD data;
+    DWORD data = 0;
     HKEY hKey;
     HKEY hSubKey;
     if (OpenRegKey(hKey))
@@ -61,11 +62,13 @@ string QueryRegKey(LPCWSTR strSubKey, LPCWSTR strValueName)//这里是传3个参数
 
             if (ERROR_SUCCESS == RegQueryValueEx(hSubKey, L"UBR", 0, &dwType, (LPBYTE)&data, &dwLen))
             {
-
-                return to_string(data);
+                RegCloseKey(hSubKey);
+                
             }
         }
+
         RegCloseKey(hKey); //关闭注册表
+        return to_string(data);
     }
 
     return "";
@@ -77,6 +80,7 @@ HRESULT hres;
 IWbemServices* pSvc = NULL;
 IWbemLocator* pLoc = NULL;
 BOOL isWMIOpened = false;
+BOOL isSecurityInited = false;
 IEnumWbemClassObject* pEnumerator = NULL;
 BOOL openWMI()
 {
@@ -93,7 +97,7 @@ BOOL openWMI()
 
     // Step 2: --------------------------------------------------
     // Set general COM security levels --------------------------
-
+    if(!isSecurityInited)
     hres = CoInitializeSecurity(
         NULL,
         -1,                          // COM authentication
@@ -113,8 +117,9 @@ BOOL openWMI()
             << hex << hres << endl;
         CoUninitialize();
         return FALSE;                    // Program has failed.
+        
     }
-
+    isSecurityInited = TRUE;
     // Step 3: ---------------------------------------------------
     // Obtain the initial locator to WMI -------------------------
 
@@ -191,10 +196,16 @@ BOOL openWMI()
 }
 BOOL closeWMI()
 {
-    pSvc->Release();
-    pLoc->Release();
-    pEnumerator->Release();
-    CoUninitialize();
+    if (isWMIOpened == 1) {
+        if (pSvc != NULL)
+            pSvc->Release();
+        if (pLoc != NULL)
+            pLoc->Release();
+        if (pEnumerator != NULL)
+            pEnumerator->Release();
+        CoUninitialize();
+        isWMIOpened = 0;
+    }
     return TRUE;
 }
 int CPUCount = 0;
@@ -234,7 +245,7 @@ string getCPUInformation()
     IWbemClassObject* pclsObj = NULL;
     ULONG uReturn = 0;
     string result = "";
-
+    CPUCount = 0;
     while (pEnumerator)
     {
         HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1,
@@ -251,12 +262,16 @@ string getCPUInformation()
         // Get the value of the Name property
         hr = pclsObj->Get(L"Name", 0, &vtProp, 0, 0);
         result += "\t"+to_string(CPUCount) + "：" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
+        VariantClear(&vtProp);
         hr = pclsObj->Get(L"MaxClockSpeed", 0, &vtProp, 0, 0);
         result += " @"+to_string((int)vtProp.lVal/1000)+"."+ to_string((int)vtProp.lVal / 10 % 100)+"GHz";
+        VariantClear(&vtProp);
         hr = pclsObj->Get(L"NumberOfCores", 0, &vtProp, 0, 0);
         result += " " + to_string(vtProp.lVal) + "核心";
+        VariantClear(&vtProp);
         hr = pclsObj->Get(L"NumberOfLogicalProcessors", 0, &vtProp, 0, 0);
         result += " " + to_string(vtProp.lVal) + "逻辑处理器";
+        VariantClear(&vtProp);
         hr = pclsObj->Get(L"Description", 0, &vtProp, 0, 0);
         result += "\n\t\t"+wide_Char_To_Multi_Byte(vtProp.bstrVal) + "";
         VariantClear(&vtProp);
@@ -330,7 +345,7 @@ string getDiskInfo()
     IWbemClassObject* pclsObj = NULL;
     ULONG uReturn = 0;
     string result = "";
-
+    DiskCount = 0;
     while (pEnumerator)
     {
         HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1,
@@ -405,7 +420,7 @@ string getVideoDriverInfo()
     IWbemClassObject* pclsObj = NULL;
     ULONG uReturn = 0;
     string result = "";
-
+    videoDriverCount = 0;
     while (pEnumerator)
     {
         HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1,
@@ -422,7 +437,7 @@ string getVideoDriverInfo()
         // Get the value of the Name property
         hr = pclsObj->Get(L"Caption", 0, &vtProp, 0, 0);
         result += "\t" + to_string(videoDriverCount) + "：" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
-        
+        VariantClear(&vtProp);
         hr = pclsObj->Get(L"VideoModeDescription", 0, &vtProp, 0, 0);
         //string capicaty = wide_Char_To_Multi_Byte(vtProp.bstrVal);
         if(vtProp.bstrVal!=NULL)
@@ -479,7 +494,7 @@ string getConnectedNetworkDriverInfo()
     IWbemClassObject* pclsObj = NULL;
     ULONG uReturn = 0;
     string result = "";
-
+    ConnectedNetworkDriverCount = 0;
     while (pEnumerator)
     {
         HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1,
@@ -498,11 +513,11 @@ string getConnectedNetworkDriverInfo()
         //result += "\t" + to_string(videoDriverCount) + "：" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
         BOOL flag = vtProp.boolVal;
         if (flag) {
-
+            VariantClear(&vtProp);
             hr = pclsObj->Get(L"Caption", 0, &vtProp, 0, 0);
             if (vtProp.bstrVal != NULL)
                 result += "\t" + to_string(ConnectedNetworkDriverCount) + "：" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
-            
+            VariantClear(&vtProp);
             hr = pclsObj->Get(L"IPAddress", 0, &vtProp, 0, 0);
             result += "\n\t\t IP地址：";
             //string capicaty = wide_Char_To_Multi_Byte(vtProp.bstrVal);
@@ -525,7 +540,7 @@ string getConnectedNetworkDriverInfo()
             }
             /*if (vtProp.bstrVal != NULL)
                 result += "\n\t\t IP地址：" + wide_Char_To_Multi_Byte(vtProp.vt);*/
-            
+            VariantClear(&vtProp);
             hr = pclsObj->Get(L"DefaultIPGateWay", 0, &vtProp, 0, 0);
             result += "\n\t\t 默认网关：";
 
@@ -547,6 +562,7 @@ string getConnectedNetworkDriverInfo()
                     }
                 }
             }
+            VariantClear(&vtProp);
             /*if (vtProp.bstrVal != NULL)
             result += " 默认网关：" + wide_Char_To_Multi_Byte(vtProp.bstrVal);*/
             hr = pclsObj->Get(L"MACAddress", 0, &vtProp, 0, 0);
@@ -602,7 +618,7 @@ string getMemoryInfo()
     IWbemClassObject* pclsObj = NULL;
     ULONG uReturn = 0;
     string result="";
-
+    MemoryCount = 0;
     while (pEnumerator)
     {
         HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1,
@@ -619,8 +635,10 @@ string getMemoryInfo()
         // Get the value of the Name property
         hr = pclsObj->Get(L"Caption", 0, &vtProp, 0, 0);
         result += "\t"+to_string(MemoryCount) + "：" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
+        VariantClear(&vtProp);
         hr = pclsObj->Get(L"ConfiguredClockSpeed", 0, &vtProp, 0, 0);
         result += " @" + to_string((int)vtProp.llVal) + "MHz";
+        VariantClear(&vtProp);
         hr = pclsObj->Get(L"Capacity", 0, &vtProp, 0, 0);
         string capicaty = wide_Char_To_Multi_Byte(vtProp.bstrVal);
         result += " " + sizeToStr(atoll(capicaty.c_str()));
@@ -689,8 +707,9 @@ string getOSFullName()
         VariantInit(&vtProp);
         // Get the value of the Name property
         hr = pclsObj->Get(L"Caption", 0, &vtProp, 0, 0);
-        wcout << " OS Name : " << vtProp.bstrVal << endl;
+        //wcout << " OS Name : " << vtProp.bstrVal << endl;
         result = wide_Char_To_Multi_Byte(vtProp.bstrVal);
+        VariantClear(&vtProp);
         hr = pclsObj->Get(L"Version", 0, &vtProp, 0, 0);
         result += "（内核版本:" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
         if (IsWindows7OrGreater())
