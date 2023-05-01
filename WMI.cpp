@@ -27,11 +27,11 @@ using namespace std;
 //    }else return ""
 //}
 
-void wcharTochar(const wchar_t* wchar, char* chr, int length)
-{
-    WideCharToMultiByte(CP_ACP, 0, wchar, -1,
-        chr, length, NULL, NULL);
-}
+//void wcharTochar(const wchar_t* wchar, char* chr, int length)
+//{
+//    WideCharToMultiByte(CP_UTF8, 0, wchar, -1,
+//        chr, length, NULL, NULL);
+//}
 
 bool OpenRegKey(HKEY& hRetKey)
 {
@@ -81,7 +81,7 @@ IWbemServices* pSvc = NULL;
 IWbemLocator* pLoc = NULL;
 BOOL isWMIOpened = false;
 BOOL isSecurityInited = false;
-IEnumWbemClassObject* pEnumerator = NULL;
+
 BOOL openWMI()
 {
     // Step 1: --------------------------------------------------
@@ -201,8 +201,6 @@ BOOL closeWMI()
             pSvc->Release();
         if (pLoc != NULL)
             pLoc->Release();
-        if (pEnumerator != NULL)
-            pEnumerator->Release();
         CoUninitialize();
         isWMIOpened = 0;
     }
@@ -214,6 +212,7 @@ int getCPUCount() {
 };
 string getCPUInformation()
 {
+    IEnumWbemClassObject* pEnumerator = NULL;
     if (!isWMIOpened)isWMIOpened = openWMI();
     if (!isWMIOpened)return "Some Error occored.";
     // Step 6: --------------------------------------------------
@@ -281,7 +280,7 @@ string getCPUInformation()
 
     // Cleanup
     // ========
-
+    pEnumerator->Release();
     return result;   // Program successfully completed.
 
 }
@@ -311,6 +310,7 @@ int getDiskCount() {
 
 string getDiskInfo()
 {
+    IEnumWbemClassObject* pEnumerator = NULL;
     if (!isWMIOpened)isWMIOpened = openWMI();
     if (!isWMIOpened)return "Some Error occored.";
 
@@ -374,6 +374,7 @@ string getDiskInfo()
     }
     // Cleanup
     // ========
+    pEnumerator->Release();
     return result;   // Program successfully completed.
 }
 
@@ -386,6 +387,7 @@ int getVideoDriverCount()
 
 string getVideoDriverInfo()
 {
+    IEnumWbemClassObject* pEnumerator = NULL;
     if (!isWMIOpened)isWMIOpened = openWMI();
     if (!isWMIOpened)return "Some Error occored.";
 
@@ -449,6 +451,7 @@ string getVideoDriverInfo()
     }
     // Cleanup
     // ========
+    pEnumerator->Release();
     return result;   // Program successfully completed.
 }
 
@@ -460,11 +463,9 @@ int getConnectedNetworkDriverCount()
 
 string getConnectedNetworkDriverInfo()
 {
+    IEnumWbemClassObject* pEnumerator = NULL;
     if (!isWMIOpened)isWMIOpened = openWMI();
     if (!isWMIOpened)return "Some Error occored.";
-
-
-
     // Step 6: --------------------------------------------------
     // Use the IWbemServices pointer to make requests of WMI ----
 
@@ -573,17 +574,19 @@ string getConnectedNetworkDriverInfo()
 
         }
         VariantClear(&vtProp);
-        
+         
         pclsObj->Release();
     }
     // Cleanup
     // ========
+    pEnumerator->Release();
     return result;   // Program successfully completed.
 }
 
 
 string getMemoryInfo()
 {
+    IEnumWbemClassObject* pEnumerator = NULL;
     if (!isWMIOpened)isWMIOpened = openWMI();
     if (!isWMIOpened)return "Some Error occored.";
 
@@ -650,13 +653,14 @@ string getMemoryInfo()
 
     // Cleanup
     // ========
-
+    pEnumerator->Release();
     return result;   // Program successfully completed.
 }
 
 
 string getOSFullName()
 {
+    IEnumWbemClassObject* pEnumerator = NULL;
     if (!isWMIOpened)isWMIOpened = openWMI();
     if (!isWMIOpened)return "Some Error occored.";
     
@@ -722,7 +726,7 @@ string getOSFullName()
 
     // Cleanup
     // ========
-    
+    pEnumerator->Release();
     return result;   // Program successfully completed.
 
 }

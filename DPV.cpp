@@ -3,7 +3,9 @@
 
 #include "framework.h"
 #include "DPV.h"
-
+#define ID_ABOUT		40001
+//#define IDM_SETTING     1000
+#define ID_EXIT		40002
 
 #define MAX_LOADSTRING 100
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
@@ -21,6 +23,9 @@ HWND hWndMain;                                  //主窗口
 HANDLE refrushThread,perfThread;                // 更新线程
 DWORD ThreadStatus,perfStatus;
 HANDLE globalHeap;                              //堆
+HMENU iconPopupMenu;                                //弹出窗口信息。
+
+NOTIFYICONDATA nid = {};
 // 此代码模块中包含的函数的前向声明:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
@@ -109,7 +114,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, NULL,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
    SetWindowLong(hWnd, GWL_STYLE, GetWindowLong(hWnd, GWL_STYLE) & ~WS_CAPTION);
-   SetWindowLong(hWnd, GWL_EXSTYLE, WS_EX_LAYERED | WS_EX_TOOLWINDOW |WS_EX_NOACTIVATE);
+   SetWindowLong(hWnd, GWL_EXSTYLE, WS_EX_LAYERED | WS_EX_TOOLWINDOW |WS_EX_NOACTIVATE | WS_EX_COMPOSITED);
    SetLayeredWindowAttributes(hWnd, RGB(255, 255, 255), 0, 1);
    if (!hWnd)
    {
@@ -124,68 +129,58 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 }
 
 
-
-
+std::string osVersion="系统版本：", CPUInfo="CPU：", MemoryInfo="内存信息：", VideoDriverInfo="显卡信息：", ConnectedNetworkInfo="网络信息：",
+DiskInfo="磁盘信息：";
+WCHAR resultstr[512];
 
 
 void updateInfo(int param)
 {
     HWND hWnd = hWndMain;
-    RECT hWndSize;
-    
-    GetWindowRect(hWnd, &hWndSize);
-    //UPDATEINFOPARA a = (UPDATEINFOPARA)param;
     INT16 findDevice = param;
     if (findDevice == -1) {
-        wchar_t* deleteStr;
-        std::string osVersion;
         osVersion = "操作系统版本：" + getOSFullName();
-        SetWindowText(OSStatic, deleteStr = multi_Byte_To_Wide_Char(osVersion));
+        //SetWindowText(OSStatic, deleteStr = multi_Byte_To_Wide_Char(osVersion));
         //MoveWindow(OSStatic, 0, 0, hWndSize.right - hWndSize.left, 22, TRUE);
-        delete[]deleteStr;
-        std::string CPUInfo;
+        //delete[]deleteStr;
+        //std::string CPUInfo;
         CPUInfo = "CPU：" + getCPUInformation();
-        SetWindowText(CPUStatic, deleteStr = multi_Byte_To_Wide_Char(CPUInfo));
+        //SetWindowText(CPUStatic, deleteStr = multi_Byte_To_Wide_Char(CPUInfo));
         //MoveWindow(CPUStatic, 0, 22, hWndSize.right - hWndSize.left, 44 * getCPUCount(), TRUE);
-        delete[] deleteStr;
-        std::string MemoryInfo;
+        //delete[] deleteStr;
+        //std::string MemoryInfo;
         MemoryInfo = "内存：" + getMemoryInfo();
-        SetWindowText(MemoryStatic, deleteStr = multi_Byte_To_Wide_Char(MemoryInfo));
+        //SetWindowText(MemoryStatic, deleteStr = multi_Byte_To_Wide_Char(MemoryInfo));
         //MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount(), hWndSize.right - hWndSize.left, 22 * getMemoryCount(), TRUE);
-        delete[] deleteStr;
-        std::string VideoDriverInfo;
+        //delete[] deleteStr;
+        //std::string VideoDriverInfo;
         VideoDriverInfo = "显卡信息：" + getVideoDriverInfo();
-        SetWindowText(VideoDriverStatic, deleteStr = multi_Byte_To_Wide_Char(VideoDriverInfo));
-        delete[] deleteStr;
+        //SetWindowText(VideoDriverStatic, deleteStr = multi_Byte_To_Wide_Char(VideoDriverInfo));
+        //delete[] deleteStr;
         //MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
-        std::string DiskInfo;
+        //std::string DiskInfo;
         DiskInfo = "硬盘：" + getDiskInfo();
-        SetWindowText(DiskStatic, deleteStr = multi_Byte_To_Wide_Char(DiskInfo));
-        delete[] deleteStr;
+        //SetWindowText(DiskStatic, deleteStr = multi_Byte_To_Wide_Char(DiskInfo));
+        //delete[] deleteStr;
         // MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
-        std::string ConnectedNetworkInfo;
+        //std::string ConnectedNetworkInfo;
         ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
-        SetWindowText(ConnectedNetworkStatic, deleteStr = multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
-        delete[] deleteStr;
+        //SetWindowText(ConnectedNetworkStatic, deleteStr = multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
+        //delete[] deleteStr;
 
         //MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
-        MoveWindow(OSStatic, 0, 0, hWndSize.right - hWndSize.left, 22, TRUE);
-        MoveWindow(CPUStatic, 0, 22, hWndSize.right - hWndSize.left, 44 * getCPUCount(), TRUE);
-        MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount(), hWndSize.right - hWndSize.left, 22 * getMemoryCount(), TRUE);
-        MoveWindow(DiskStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
-        MoveWindow(VideoDriverStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
-        MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
-        MoveWindow(performanceStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount() + 22 + 88 * getConnectedNetworkDriverCount(), hWndSize.right - hWndSize.left, 66, TRUE);
         //UpdateWindow(hWnd);
         //UpdateWindow(hWnd);
     }
     else if (findDevice == 1)
     {
-        std::string ConnectedNetworkInfo;
-        std::string original;
-        wchar_t* deleteStr;
+        //ConnectedNetworkInfo.clear();
+        //string().swap(ConnectedNetworkInfo);
+        //std::string ConnectedNetworkInfo;
+        //std::string original;
+        //wchar_t* deleteStr;
         ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
-        int length = GetWindowTextLength(ConnectedNetworkStatic);
+        /*int length = GetWindowTextLength(ConnectedNetworkStatic);
         wchar_t *wcctxt = new wchar_t[length+1];
         GetWindowText(ConnectedNetworkStatic, wcctxt, length+1);
         original = wide_Char_To_Multi_Byte(wcctxt);
@@ -197,20 +192,27 @@ void updateInfo(int param)
         }
         delete[] wcctxt;
         MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
-        MoveWindow(performanceStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount()+ 22 + 88 * getConnectedNetworkDriverCount(), hWndSize.right - hWndSize.left, 66, TRUE);
+        MoveWindow(performanceStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount()+ 22 + 88 * getConnectedNetworkDriverCount(), hWndSize.right - hWndSize.left, 66, TRUE);*/
     }
     else if (findDevice == 2)
     {
-        std::string VideoDriverInfo;
+        /*VideoDriverInfo.clear();
+        DiskInfo.clear();
+        ConnectedNetworkInfo.clear();
+        string().swap(VideoDriverInfo);
+        string().swap(DiskInfo);
+        string().swap(ConnectedNetworkInfo);*/
+
+        //std::string VideoDriverInfo;
         VideoDriverInfo = "显卡信息：" + getVideoDriverInfo();
         
-        std::string DiskInfo;
+        //std::string DiskInfo;
         DiskInfo = "硬盘：" + getDiskInfo();
-        
+        //string().swap(ConnectedNetworkInfo);
         // MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
-        std::string ConnectedNetworkInfo;
+        //std::string ConnectedNetworkInfo;
         ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
-        wchar_t* deleteStr;
+        /*wchar_t* deleteStr;
         MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
         MoveWindow(VideoDriverStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
         MoveWindow(DiskStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
@@ -220,31 +222,31 @@ void updateInfo(int param)
         SetWindowText(DiskStatic, deleteStr = multi_Byte_To_Wide_Char(DiskInfo));
         delete[] deleteStr;
         SetWindowText(ConnectedNetworkStatic, deleteStr = multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
-        delete[] deleteStr;
+        delete[] deleteStr;*/
         
     }
     UpdateWindow(hWnd);
-    
+    PostMessage(hWnd, WM_PAINT, (WPARAM)1, NULL);
 }
 
 int needUpdate = 1;
 
+WCHAR CPUF[] = L"\\Processor Information(_Total)\\Processor Frequency";
+DPHViewer CPUFreq(CPUF);
 
+WCHAR CPUITime[] = L"\\Processor Information(_Total)\\% Processor Time";
+DPHViewer CPUITimes(CPUITime);
 
+WCHAR MemoryAvailStr[] = L"\\Memory\\Available MBytes";
+DPHViewer MemoryAvail(MemoryAvailStr);
+
+WCHAR NetworkStr[] = L"\\Network Interface(*)\\Bytes Total/sec";
+DPHViewer Network(NetworkStr);
 
 DWORD WINAPI updatePerf(LPVOID param)
 {
-    WCHAR CPUF[] = L"\\Processor Information(_Total)\\Processor Frequency";
-    DPHViewer CPUFreq(CPUF);
-
-    WCHAR CPUITime[] = L"\\Processor Information(_Total)\\% Processor Time";
-    DPHViewer CPUITimes(CPUITime);
-
-    WCHAR MemoryAvailStr[] = L"\\Memory\\Available MBytes";
-    DPHViewer MemoryAvail(MemoryAvailStr);
-
-    WCHAR NetworkStr[] = L"\\Network Interface(*)\\Bytes Total/sec";
-    DPHViewer Network(NetworkStr);
+    
+    
     while (1)
     {
         Sleep(1000);
@@ -252,19 +254,19 @@ DWORD WINAPI updatePerf(LPVOID param)
         double cpuITimesD = CPUITimes.getData();
         int memoryAvail = MemoryAvail.getData();
         double networkTran = Network.getData();
-        WCHAR out[128];
+        /*WCHAR out[128];
         swprintf_s(out, L"%lf\n", networkTran);
-        OutputDebugString(out);
-        WCHAR str[512];
+        OutputDebugString(out);*/
         
-        swprintf_s(str, L"资源使用率：\tCPU：%.2lf%%（%.2lf GHz）\n\t\t内存：%d MB 空闲\n\t\t网络活动：%.1f %cB/s", 
+        
+        swprintf_s(resultstr, L"资源使用率：\tCPU：%.2lf%%（%.2lf GHz）\t内存：%d MB 空闲\t网络活动：%.1f %cB/s", 
             cpuITimesD, cpuNums / 1000, memoryAvail,
             int(networkTran / 1024 / 1024) > 0 ? networkTran / 1024/1024: networkTran / 1024,
             int(networkTran / 1024 / 1024) > 0?'M':'K');
 
-        SetWindowText(performanceStatic, str);
+       PostMessage(hWndMain, WM_PAINT, (WPARAM)2, NULL);
     }
-
+    
 }
 
 
@@ -290,7 +292,7 @@ DWORD WINAPI checkUpdate(LPVOID param)
         }
         else
             Sleep(2000);
-        _CrtDumpMemoryLeaks();
+        
         count++;
         if (count % 2 == 0)
         {
@@ -332,6 +334,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
     {
+
         globalHeap = GetProcessHeap(); 
         //SetProcessWorkingSetSize()
         SetProcessDPIAware();
@@ -465,6 +468,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             0,
             (PVOID)FE_FONTSMOOTHINGCLEARTYPE,
             SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+        
+        nid.cbSize = sizeof(nid);
+        nid.hWnd = hWnd;
+        nid.uID = 0;
+        nid.uCallbackMessage = WM_USER;
+        nid.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE | NIF_TIP;
+        nid.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_SMALL));
+        lstrcpy(nid.szTip, szTitle);
+        Shell_NotifyIcon(NIM_ADD, &nid);
+        iconPopupMenu = CreatePopupMenu();//生成托盘菜单
+        //为托盘菜单添加两个选项
+        UINT WM_TASKBARCREATED = RegisterWindowMessage(TEXT("TaskbarCreated"));
+        AppendMenu(iconPopupMenu, MF_STRING, ID_ABOUT, TEXT("关于"));
+        //AppendMenu(iconPopupMenu, MF_STRING, IDM_SETTING, TEXT("设置"));
+        AppendMenu(iconPopupMenu, MF_STRING, ID_EXIT, TEXT("退出"));
+        Shell_NotifyIcon(NIM_ADD, &nid);
     }
 
     case WM_COMMAND:
@@ -488,9 +507,55 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
-            
+            RECT hWndSize;
+            GetWindowRect(hWnd, &hWndSize);
             //SetLayeredWindowAttributes(hWnd, RGB(251, 255, 242), 0, LWA_COLORKEY);
             // TODO: 在此处添加使用 hdc 的任何绘图代码...
+            if ((int)wParam == 1) {
+
+                wchar_t* deleteStr;
+                //std::string osVersion;
+                //osVersion = "操作系统版本：" + getOSFullName();
+                MoveWindow(OSStatic, 0, 0, hWndSize.right - hWndSize.left, 22, TRUE);
+                MoveWindow(CPUStatic, 0, 22, hWndSize.right - hWndSize.left, 44 * getCPUCount(), TRUE);
+                MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount(), hWndSize.right - hWndSize.left, 22 * getMemoryCount(), TRUE);
+                MoveWindow(DiskStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
+                MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
+                MoveWindow(VideoDriverStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
+                MoveWindow(performanceStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount() + 22 + 88 * getConnectedNetworkDriverCount(), hWndSize.right - hWndSize.left, 88, TRUE);
+
+                SetWindowText(OSStatic, deleteStr = multi_Byte_To_Wide_Char(osVersion));
+                delete[]deleteStr;
+                //std::string CPUInfo;
+                //CPUInfo = "CPU：" + getCPUInformation();
+                SetWindowText(CPUStatic, deleteStr = multi_Byte_To_Wide_Char(CPUInfo));
+                delete[] deleteStr;
+                //std::string MemoryInfo;
+                //MemoryInfo = "内存：" + getMemoryInfo();
+                SetWindowText(MemoryStatic, deleteStr = multi_Byte_To_Wide_Char(MemoryInfo));
+
+                delete[] deleteStr;
+                //std::string VideoDriverInfo;
+                //VideoDriverInfo = "显卡信息：" + getVideoDriverInfo();
+                SetWindowText(VideoDriverStatic, deleteStr = multi_Byte_To_Wide_Char(VideoDriverInfo));
+                delete[] deleteStr;
+                //MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
+                //std::string DiskInfo;
+                //DiskInfo = "硬盘：" + getDiskInfo();
+                SetWindowText(DiskStatic, deleteStr = multi_Byte_To_Wide_Char(DiskInfo));
+                delete[] deleteStr;
+                //MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
+                //std::string ConnectedNetworkInfo;
+                //ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
+                SetWindowText(ConnectedNetworkStatic, deleteStr = multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
+                delete[] deleteStr;
+                //_CrtDumpMemoryLeaks();
+            }
+            else if (wParam == 2)
+            {
+                MoveWindow(performanceStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount() + 22 + 88 * getConnectedNetworkDriverCount(), hWndSize.right - hWndSize.left, 88, TRUE);
+                SetWindowText(performanceStatic, resultstr);
+            }
             EndPaint(hWnd, &ps);
             
         }
@@ -501,6 +566,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         needUpdate = 3;
         
     }   break;
+    
+
     case WM_CTLCOLORSTATIC:
     {
         HDC hdc = (HDC)wParam;
@@ -511,12 +578,43 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     break;
     case WM_DESTROY:
-        PostQuitMessage(0);
+        Shell_NotifyIcon(NIM_DELETE, &nid);
         closeWMI();
+        PostQuitMessage(0);
+        
         break;
+    case WM_USER://连续使用该程序时候的消息.
+    {
+        POINT pt;
+        if (lParam == WM_LBUTTONDOWN) {
+            DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+        }
+
+        if (lParam == WM_RBUTTONDOWN)
+        {
+            GetCursorPos(&pt);//取鼠标坐标
+            ::SetForegroundWindow(hWnd);//解决在菜单外单击左键菜单不消失的问题
+            int xx = TrackPopupMenu(iconPopupMenu, TPM_RETURNCMD, pt.x, pt.y, NULL, hWnd, NULL);//显示菜单并获取选项ID
+            if (xx == ID_ABOUT ) {  DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About); }
+            //if (xx == IDM_SETTING && !SettingDialogisopened) { SettingDialogisopened = true; DialogBox(hInst, MAKEINTRESOURCE(IDD_DIALOGBAR), hWnd, Setting); }
+            if (xx == ID_EXIT) { PostMessage(hWnd, WM_DESTROY, NULL, NULL); }
+            //MessageBox(hwnd, TEXT("右键"), szAppName, MB_OK);
+        }
+        break;
+    }
     default:
+    {
+        if (message == RegisterWindowMessage(TEXT("TaskbarCreated")))
+        {
+            //系统Explorer崩溃重启时，重新加载托盘
+            Shell_NotifyIcon(NIM_ADD, &nid);
+        }
+    }
+
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
+
+    
     return 0;
 }
 

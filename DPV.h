@@ -6,6 +6,8 @@
 #include "WMI.h"
 #include <netlistmgr.h>
 #include "performance.hpp"
+#include <shellapi.h>
+
 //class UPDATEINFOPARA {
 //	HWND hWnd;
 //	int deviceNumber;

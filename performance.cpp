@@ -33,7 +33,7 @@
         }
         return DisplayValue.doubleValue;
     }
-    void DPHViewer::init()
+     void DPHViewer::init()
     {
         Status = PdhOpenQuery(NULL, NULL, &Query);
         if (Status != ERROR_SUCCESS)
@@ -66,7 +66,7 @@
         }
     }
     
-    void DPHViewer::destroy()
+     void DPHViewer::destroy()
     {
         if (Query)
         {
