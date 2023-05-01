@@ -130,6 +130,7 @@
     <ClInclude Include="common\common.h" />
     <ClInclude Include="DPV.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="performance.hpp" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="WMI.h" />
@@ -137,6 +138,7 @@
   <ItemGroup>
     <ClCompile Include="common\common.cpp" />
     <ClCompile Include="DPV.cpp" />
+    <ClCompile Include="performance.cpp" />
     <ClCompile Include="WMI.cpp" />
   </ItemGroup>
   <ItemGroup>

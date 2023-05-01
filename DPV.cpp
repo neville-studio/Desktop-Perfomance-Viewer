@@ -15,11 +15,11 @@ WCHAR szTitle[MAX_LOADSTRING];                  // 标题栏文本
 WCHAR szWindowClass[MAX_LOADSTRING];            // 主窗口类名
 HFONT hFont;                                    // 全局字体
 HWND OSStatic,CPUStatic, MemoryStatic;          // 全局控件(OS版本、CPU信息、内存信息)
-HWND DiskStatic, VideoDriverStatic, ConnectedNetworkStatic;
+HWND DiskStatic, VideoDriverStatic, ConnectedNetworkStatic,performanceStatic;
                                                 // 全局控件（硬盘、显卡、已连接的网卡信息）
 HWND hWndMain;                                  //主窗口
-HANDLE refrushThread;                         // 更新线程
-DWORD ThreadStatus;
+HANDLE refrushThread,perfThread;                // 更新线程
+DWORD ThreadStatus,perfStatus;
 HANDLE globalHeap;                              //堆
 // 此代码模块中包含的函数的前向声明:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -175,7 +175,7 @@ void updateInfo(int param)
         MoveWindow(DiskStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
         MoveWindow(VideoDriverStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
         MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
-        
+        MoveWindow(performanceStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount() + 22 + 88 * getConnectedNetworkDriverCount(), hWndSize.right - hWndSize.left, 66, TRUE);
         //UpdateWindow(hWnd);
         //UpdateWindow(hWnd);
     }
@@ -197,6 +197,7 @@ void updateInfo(int param)
         }
         delete[] wcctxt;
         MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
+        MoveWindow(performanceStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount()+ 22 + 88 * getConnectedNetworkDriverCount(), hWndSize.right - hWndSize.left, 66, TRUE);
     }
     else if (findDevice == 2)
     {
@@ -213,6 +214,7 @@ void updateInfo(int param)
         MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
         MoveWindow(VideoDriverStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
         MoveWindow(DiskStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
+        MoveWindow(performanceStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount() + 22 + 88 * getConnectedNetworkDriverCount(), hWndSize.right - hWndSize.left, 88, TRUE);
         SetWindowText(VideoDriverStatic, deleteStr=multi_Byte_To_Wide_Char(VideoDriverInfo));
         delete[] deleteStr;
         SetWindowText(DiskStatic, deleteStr = multi_Byte_To_Wide_Char(DiskInfo));
@@ -226,6 +228,44 @@ void updateInfo(int param)
 }
 
 int needUpdate = 1;
+
+
+
+
+DWORD WINAPI updatePerf(LPVOID param)
+{
+    WCHAR CPUF[] = L"\\Processor Information(_Total)\\Processor Frequency";
+    DPHViewer CPUFreq(CPUF);
+
+    WCHAR CPUITime[] = L"\\Processor Information(_Total)\\% Processor Time";
+    DPHViewer CPUITimes(CPUITime);
+
+    WCHAR MemoryAvailStr[] = L"\\Memory\\Available MBytes";
+    DPHViewer MemoryAvail(MemoryAvailStr);
+
+    WCHAR NetworkStr[] = L"\\Network Interface(*)\\Bytes Total/sec";
+    DPHViewer Network(NetworkStr);
+    while (1)
+    {
+        Sleep(1000);
+        double cpuNums = CPUFreq.getData();
+        double cpuITimesD = CPUITimes.getData();
+        int memoryAvail = MemoryAvail.getData();
+        double networkTran = Network.getData();
+        WCHAR out[128];
+        swprintf_s(out, L"%lf\n", networkTran);
+        OutputDebugString(out);
+        WCHAR str[512];
+        
+        swprintf_s(str, L"资源使用率：\tCPU：%.2lf%%（%.2lf GHz）\n\t\t内存：%d MB 空闲\n\t\t网络活动：%.1f %cB/s", 
+            cpuITimesD, cpuNums / 1000, memoryAvail,
+            int(networkTran / 1024 / 1024) > 0 ? networkTran / 1024/1024: networkTran / 1024,
+            int(networkTran / 1024 / 1024) > 0?'M':'K');
+
+        SetWindowText(performanceStatic, str);
+    }
+
+}
 
 
 DWORD WINAPI checkUpdate(LPVOID param)
@@ -247,15 +287,16 @@ DWORD WINAPI checkUpdate(LPVOID param)
         {
             updateInfo(2);
             needUpdate = 0;
-        }else
-        Sleep(2000);
+        }
+        else
+            Sleep(2000);
         _CrtDumpMemoryLeaks();
         count++;
-        if (count %2 == 0)
+        if (count % 2 == 0)
         {
-            if(needUpdate==0)
-            needUpdate = 2;
-            
+            if (needUpdate == 0)
+                needUpdate = 2;
+
         }
         else if (count == 15)
         {
@@ -263,9 +304,6 @@ DWORD WINAPI checkUpdate(LPVOID param)
         }
     }
 }
-
-
-
 
 
 
@@ -366,6 +404,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         //SetWindowText(DiskStatic, multi_Byte_To_Wide_Char(DiskInfo));
         SendMessage(DiskStatic, WM_SETFONT, (WPARAM)hFont, NULL);
 
+
         //std::string VideoDriverInfo;
         //VideoDriverInfo = "显卡信息：" + getVideoDriverInfo();
         VideoDriverStatic = CreateWindow(
@@ -397,10 +436,27 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         );
         //SetWindowText(ConnectedNetworkStatic, multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
         SendMessage(ConnectedNetworkStatic, WM_SETFONT, (WPARAM)hFont, NULL);
+
+
+        performanceStatic = CreateWindow(
+            L"static",			//静态文本框的类名
+            L"性能信息：",		//控件的文本
+            WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
+            0 /*X坐标*/, 20 + (44 * getCPUCount()) + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount() + 22 + 88 * getConnectedNetworkDriverCount()
+            /*Y坐标*/, workSpace.right / 2 - workSpace.left / 2 /*宽度*/, 88/*高度*/,
+            hWnd,		 //父窗口句柄
+            (HMENU)1,	 //为控件指定一个唯一标识符
+            hInst,		 //当前程序实例句柄
+            NULL
+        );
+        //SetWindowText(ConnectedNetworkStatic, multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
+        SendMessage(performanceStatic, WM_SETFONT, (WPARAM)hFont, NULL);
+
         hWndMain = hWnd;
         int control = -1;
            //updateInfo(&a);
         refrushThread = CreateThread(NULL, 0, checkUpdate, NULL, 0, &ThreadStatus);
+        perfThread = CreateThread(NULL, 0, updatePerf, NULL, 0, &perfStatus);
         SystemParametersInfo(SPI_SETFONTSMOOTHING,
             TRUE,
             0,

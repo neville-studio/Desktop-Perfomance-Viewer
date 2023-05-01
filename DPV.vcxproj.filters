@@ -33,6 +33,9 @@
     <ClInclude Include="WMI.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="performance.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DPV.cpp">
@@ -42,6 +45,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="WMI.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="performance.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
