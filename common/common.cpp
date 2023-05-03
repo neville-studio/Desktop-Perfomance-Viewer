@@ -34,3 +34,10 @@ wchar_t* multi_Byte_To_Wide_Char(const string& pKey)
     //delete[] pCStrKey;
     return pWCStrKey;
 }
+__int64 diffFileTime(FILETIME time1, FILETIME time2)
+{
+    __int64 a = time1.dwHighDateTime * pow(2,32) + time1.dwLowDateTime;
+    __int64 b = time2.dwHighDateTime * pow(2, 32) + time2.dwLowDateTime;
+    return (b - a);
+    
+}

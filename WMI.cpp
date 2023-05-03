@@ -65,6 +65,10 @@ string QueryRegKey(LPCWSTR strSubKey, LPCWSTR strValueName)//这里是传3个参数
                 RegCloseKey(hSubKey);
                 
             }
+            else {
+                //RegCloseKey(hSubKey);
+                return "";
+            }
         }
 
         RegCloseKey(hKey); //关闭注册表
@@ -638,9 +642,11 @@ string getMemoryInfo()
         // Get the value of the Name property
         hr = pclsObj->Get(L"Caption", 0, &vtProp, 0, 0);
         result += "\t"+to_string(MemoryCount) + "：" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
-        VariantClear(&vtProp);
-        hr = pclsObj->Get(L"ConfiguredClockSpeed", 0, &vtProp, 0, 0);
-        result += " @" + to_string((int)vtProp.llVal) + "MHz";
+        if (IsWindows10OrGreater()) {
+            VariantClear(&vtProp);
+            hr = pclsObj->Get(L"ConfiguredClockSpeed", 0, &vtProp, 0, 0);
+            result += " @" + to_string((int)vtProp.llVal) + "MHz";
+        }
         VariantClear(&vtProp);
         hr = pclsObj->Get(L"Capacity", 0, &vtProp, 0, 0);
         string capicaty = wide_Char_To_Multi_Byte(vtProp.bstrVal);
@@ -716,7 +722,8 @@ string getOSFullName()
         VariantClear(&vtProp);
         hr = pclsObj->Get(L"Version", 0, &vtProp, 0, 0);
         result += "（内核版本:" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
-        if (IsWindows7OrGreater())
+        string ubr = QueryRegKey(L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", L"UBR");
+        if (ubr.length()!=0)
             result += "."+QueryRegKey(L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", L"UBR");
         result+="）";
         VariantClear(&vtProp);

@@ -17,3 +17,4 @@ using namespace std;
 using namespace std;
 string wide_Char_To_Multi_Byte(wchar_t* pWCStrKey);
 wchar_t* multi_Byte_To_Wide_Char(const string& pKey);
+__int64 diffFileTime(FILETIME time1, FILETIME time2);

@@ -245,24 +245,47 @@ DPHViewer Network(NetworkStr);
 
 DWORD WINAPI updatePerf(LPVOID param)
 {
-    
-    
+    FILETIME okernalTime, oUserTime, oIdleTime;
+    if(!IsWindows7OrGreater())
+    GetSystemTimes(&oIdleTime, &okernalTime, &oUserTime);
     while (1)
     {
         Sleep(1000);
         double cpuNums = CPUFreq.getData();
-        double cpuITimesD = CPUITimes.getData();
+        double cpuITimesD;
+        if (!IsWindows7OrGreater()) {
+            FILETIME kernalTime, UserTime, IdleTime;
+            GetSystemTimes(&IdleTime, &kernalTime, &UserTime);
+            _int64 kernels = diffFileTime(okernalTime, kernalTime);
+            _int64 Idles = diffFileTime(oIdleTime, IdleTime);
+            _int64 Users = diffFileTime(oUserTime, UserTime);
+           cpuITimesD  = ((double)kernels + (double)Users - (double)Idles) * 100.0 / (kernels + Idles);
+            okernalTime = kernalTime; oUserTime = UserTime; oIdleTime = IdleTime;
+        }
+        else {
+            cpuITimesD = CPUITimes.getData();
+        }
+        //OutputDebugString((to_wstring(cpuITimesD)+ L" " + to_wstring(kernels)+L" " + to_wstring(Idles)+L" "+ to_wstring(Users) + L"\n").c_str());
+    
+        //double cpuITimesD = CPUITimes.getData();
         int memoryAvail = MemoryAvail.getData();
         double networkTran = Network.getData();
         /*WCHAR out[128];
         swprintf_s(out, L"%lf\n", networkTran);
         OutputDebugString(out);*/
-        
-        
+        if(IsWindows8OrGreater())
         swprintf_s(resultstr, L"资源使用率：\tCPU：%.2lf%%（%.2lf GHz）\t内存：%d MB 空闲\t网络活动：%.1f %cB/s", 
             cpuITimesD, cpuNums / 1000, memoryAvail,
             int(networkTran / 1024 / 1024) > 0 ? networkTran / 1024/1024: networkTran / 1024,
             int(networkTran / 1024 / 1024) > 0?'M':'K');
+        else if(IsWindows7OrGreater())
+            swprintf_s(resultstr, L"资源使用率：\tCPU：%.2lf%%\t内存：%d MB 空闲\t网络活动：%.1f %cB/s",
+                cpuITimesD, memoryAvail,
+                int(networkTran / 1024 / 1024) > 0 ? networkTran / 1024 / 1024 : networkTran / 1024,
+                int(networkTran / 1024 / 1024) > 0 ? 'M' : 'K');
+        else 
+            swprintf_s(resultstr, L"资源使用率：\tCPU：%.2lf%%\t内存：%d MB 空闲",
+                cpuITimesD, memoryAvail);
 
        PostMessage(hWndMain, WM_PAINT, (WPARAM)2, NULL);
     }
@@ -523,7 +546,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
                 MoveWindow(VideoDriverStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
                 MoveWindow(performanceStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount() + 22 + 88 * getConnectedNetworkDriverCount(), hWndSize.right - hWndSize.left, 88, TRUE);
-
+                //MoveWindow(performanceStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount() + 22 + 88 * getConnectedNetworkDriverCount(), hWndSize.right - hWndSize.left, 88, TRUE);
                 SetWindowText(OSStatic, deleteStr = multi_Byte_To_Wide_Char(osVersion));
                 delete[]deleteStr;
                 //std::string CPUInfo;
@@ -553,7 +576,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else if (wParam == 2)
             {
-                MoveWindow(performanceStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount() + 22 + 88 * getConnectedNetworkDriverCount(), hWndSize.right - hWndSize.left, 88, TRUE);
+                
                 SetWindowText(performanceStatic, resultstr);
             }
             EndPaint(hWnd, &ps);
@@ -587,15 +610,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         POINT pt;
         if (lParam == WM_LBUTTONDOWN) {
-            DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+            DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), NULL, About);
         }
 
         if (lParam == WM_RBUTTONDOWN)
         {
             GetCursorPos(&pt);//取鼠标坐标
-            ::SetForegroundWindow(hWnd);//解决在菜单外单击左键菜单不消失的问题
+            //::SetForegroundWindow(hWnd);//解决在菜单外单击左键菜单不消失的问题
             int xx = TrackPopupMenu(iconPopupMenu, TPM_RETURNCMD, pt.x, pt.y, NULL, hWnd, NULL);//显示菜单并获取选项ID
-            if (xx == ID_ABOUT ) {  DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About); }
+            if (xx == ID_ABOUT ) {  DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), NULL, About); }
             //if (xx == IDM_SETTING && !SettingDialogisopened) { SettingDialogisopened = true; DialogBox(hInst, MAKEINTRESOURCE(IDD_DIALOGBAR), hWnd, Setting); }
             if (xx == ID_EXIT) { PostMessage(hWnd, WM_DESTROY, NULL, NULL); }
             //MessageBox(hwnd, TEXT("右键"), szAppName, MB_OK);
