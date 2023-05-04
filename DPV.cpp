@@ -6,6 +6,8 @@
 #define ID_ABOUT		40001
 //#define IDM_SETTING     1000
 #define ID_EXIT		40002
+#define ID_COLORSET		40003
+
 
 #define MAX_LOADSTRING 100
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
@@ -26,6 +28,7 @@ HANDLE globalHeap;                              //堆
 HMENU iconPopupMenu;                                //弹出窗口信息。
 
 NOTIFYICONDATA nid = {};
+int r = 255, g = 255, b = 254;
 // 此代码模块中包含的函数的前向声明:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
@@ -110,7 +113,11 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // 将实例句柄存储在全局变量中
-
+   HANDLE hObject = ::CreateMutex(NULL, FALSE, _T("MutexDemo"));
+   if (GetLastError() == ERROR_ALREADY_EXISTS)
+   {
+       return FALSE;
+   }
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, NULL,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
    SetWindowLong(hWnd, GWL_STYLE, GetWindowLong(hWnd, GWL_STYLE) & ~WS_CAPTION);
@@ -139,32 +146,32 @@ void updateInfo(int param)
     HWND hWnd = hWndMain;
     INT16 findDevice = param;
     if (findDevice == -1) {
-        osVersion = "操作系统版本：" + getOSFullName();
+        osVersion = "\xE6\x93\x8D\xE4\xBD\x9C\xE7\xB3\xBB\xE7\xBB\x9F\xE7\x89\x88\xE6\x9C\xAC\xEF\xBC\x9A" + getOSFullName();
         //SetWindowText(OSStatic, deleteStr = multi_Byte_To_Wide_Char(osVersion));
         //MoveWindow(OSStatic, 0, 0, hWndSize.right - hWndSize.left, 22, TRUE);
         //delete[]deleteStr;
         //std::string CPUInfo;
-        CPUInfo = "CPU：" + getCPUInformation();
+        CPUInfo = "CPU\xEF\xBC\x9A" + getCPUInformation();
         //SetWindowText(CPUStatic, deleteStr = multi_Byte_To_Wide_Char(CPUInfo));
         //MoveWindow(CPUStatic, 0, 22, hWndSize.right - hWndSize.left, 44 * getCPUCount(), TRUE);
         //delete[] deleteStr;
         //std::string MemoryInfo;
-        MemoryInfo = "内存：" + getMemoryInfo();
+        MemoryInfo = "\xE5\x86\x85\xE5\xAD\x98\xEF\xBC\x9A" + getMemoryInfo();
         //SetWindowText(MemoryStatic, deleteStr = multi_Byte_To_Wide_Char(MemoryInfo));
         //MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount(), hWndSize.right - hWndSize.left, 22 * getMemoryCount(), TRUE);
         //delete[] deleteStr;
         //std::string VideoDriverInfo;
-        VideoDriverInfo = "显卡信息：" + getVideoDriverInfo();
+        VideoDriverInfo = "\xE6\x98\xBE\xE5\x8D\xA1\xE4\xBF\xA1\xE6\x81\xAF\xEF\xBC\x9A" + getVideoDriverInfo();
         //SetWindowText(VideoDriverStatic, deleteStr = multi_Byte_To_Wide_Char(VideoDriverInfo));
         //delete[] deleteStr;
         //MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
         //std::string DiskInfo;
-        DiskInfo = "硬盘：" + getDiskInfo();
+        DiskInfo = "\xE7\xA1\xAC\xE7\x9B\x98\xEF\xBC\x9A" + getDiskInfo();
         //SetWindowText(DiskStatic, deleteStr = multi_Byte_To_Wide_Char(DiskInfo));
         //delete[] deleteStr;
         // MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
         //std::string ConnectedNetworkInfo;
-        ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
+        ConnectedNetworkInfo = "\xE5\xB7\xB2\xE8\xBF\x9E\xE6\x8E\xA5\xE7\x9A\x84\xE7\xBD\x91\xE5\x8D\xA1\xE4\xBF\xA1\xE6\x81\xAF\xEF\xBC\x9A\n" + getConnectedNetworkDriverInfo();
         //SetWindowText(ConnectedNetworkStatic, deleteStr = multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
         //delete[] deleteStr;
 
@@ -179,7 +186,7 @@ void updateInfo(int param)
         //std::string ConnectedNetworkInfo;
         //std::string original;
         //wchar_t* deleteStr;
-        ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
+        ConnectedNetworkInfo = "\xE5\xB7\xB2\xE8\xBF\x9E\xE6\x8E\xA5\xE7\x9A\x84\xE7\xBD\x91\xE5\x8D\xA1\xE4\xBF\xA1\xE6\x81\xAF\xEF\xBC\x9A\n" + getConnectedNetworkDriverInfo();
         /*int length = GetWindowTextLength(ConnectedNetworkStatic);
         wchar_t *wcctxt = new wchar_t[length+1];
         GetWindowText(ConnectedNetworkStatic, wcctxt, length+1);
@@ -204,14 +211,14 @@ void updateInfo(int param)
         string().swap(ConnectedNetworkInfo);*/
 
         //std::string VideoDriverInfo;
-        VideoDriverInfo = "显卡信息：" + getVideoDriverInfo();
+        VideoDriverInfo = "\xE6\x98\xBE\xE5\x8D\xA1\xE4\xBF\xA1\xE6\x81\xAF\xEF\xBC\x9A" + getVideoDriverInfo();
         
         //std::string DiskInfo;
-        DiskInfo = "硬盘：" + getDiskInfo();
+        DiskInfo = "\xE7\xA1\xAC\xE7\x9B\x98\xEF\xBC\x9A" + getDiskInfo();
         //string().swap(ConnectedNetworkInfo);
         // MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
         //std::string ConnectedNetworkInfo;
-        ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
+        ConnectedNetworkInfo = "\xE5\xB7\xB2\xE8\xBF\x9E\xE6\x8E\xA5\xE7\x9A\x84\xE7\xBD\x91\xE5\x8D\xA1\xE4\xBF\xA1\xE6\x81\xAF\xEF\xBC\x9A\n" + getConnectedNetworkDriverInfo();
         /*wchar_t* deleteStr;
         MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
         MoveWindow(VideoDriverStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
@@ -286,7 +293,6 @@ DWORD WINAPI updatePerf(LPVOID param)
         else 
             swprintf_s(resultstr, L"资源使用率：\tCPU：%.2lf%%\t内存：%d MB 空闲",
                 cpuITimesD, memoryAvail);
-
        PostMessage(hWndMain, WM_PAINT, (WPARAM)2, NULL);
     }
     
@@ -334,7 +340,7 @@ DWORD WINAPI checkUpdate(LPVOID param)
 
 
 
-
+bool aboutDialogOpened = false;
 
 
 
@@ -368,7 +374,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             OUT_CHARACTER_PRECIS, CLIP_CHARACTER_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE, TEXT("微软雅黑")
         );
-        MoveWindow(hWnd, workSpace.right / 2 - workSpace.left / 2, 50, workSpace.right / 2 - workSpace.left / 2, workSpace.bottom - workSpace.top-50,TRUE);
+        MoveWindow(hWnd, workSpace.right / 2 - workSpace.left / 2, 50, workSpace.right - workSpace.left, workSpace.bottom - workSpace.top-50,TRUE);
         OSStatic = CreateWindow(
             L"static",			//静态文本框的类名
             L"操作系统版本",		//控件的文本
@@ -504,11 +510,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         //为托盘菜单添加两个选项
         UINT WM_TASKBARCREATED = RegisterWindowMessage(TEXT("TaskbarCreated"));
         AppendMenu(iconPopupMenu, MF_STRING, ID_ABOUT, TEXT("关于"));
-        //AppendMenu(iconPopupMenu, MF_STRING, IDM_SETTING, TEXT("设置"));
+        AppendMenu(iconPopupMenu, MF_STRING, ID_COLORSET, TEXT("黑色"));
         AppendMenu(iconPopupMenu, MF_STRING, ID_EXIT, TEXT("退出"));
         Shell_NotifyIcon(NIM_ADD, &nid);
     }
-
+    case WM_DISPLAYCHANGE:
+    {
+        RECT workSpace;
+        SystemParametersInfo(SPI_GETWORKAREA, 0, (PVOID)&workSpace, 0);
+        MoveWindow(hWnd, workSpace.right / 2 - workSpace.left / 2, 50, workSpace.right - workSpace.left, workSpace.bottom - workSpace.top - 50, TRUE);
+    }
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
@@ -594,7 +605,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_CTLCOLORSTATIC:
     {
         HDC hdc = (HDC)wParam;
-        SetTextColor(hdc, RGB(255,255,254));
+        SetTextColor(hdc, RGB(r,g,b));
 
         SetBkMode(hdc, TRANSPARENT);
         return (LRESULT)GetStockObject(WHITE_BRUSH);
@@ -609,7 +620,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_USER://连续使用该程序时候的消息.
     {
         POINT pt;
-        if (lParam == WM_LBUTTONDOWN) {
+        if (lParam == WM_LBUTTONDOWN && !aboutDialogOpened) {
+            aboutDialogOpened = true;
             DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), NULL, About);
         }
 
@@ -618,8 +630,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             GetCursorPos(&pt);//取鼠标坐标
             //::SetForegroundWindow(hWnd);//解决在菜单外单击左键菜单不消失的问题
             int xx = TrackPopupMenu(iconPopupMenu, TPM_RETURNCMD, pt.x, pt.y, NULL, hWnd, NULL);//显示菜单并获取选项ID
-            if (xx == ID_ABOUT ) {  DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), NULL, About); }
-            //if (xx == IDM_SETTING && !SettingDialogisopened) { SettingDialogisopened = true; DialogBox(hInst, MAKEINTRESOURCE(IDD_DIALOGBAR), hWnd, Setting); }
+            if (xx == ID_ABOUT && !aboutDialogOpened) { aboutDialogOpened = true; DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), NULL, About); }
+            if (xx == ID_COLORSET) { if (r == 255 && g == 255 && b == 254) {
+                r = 0, g = 0, b = 0;
+                ModifyMenu(iconPopupMenu, 1, MF_BYPOSITION, ID_COLORSET, L"白色");
+                //UpdateWindow(hWnd);
+            }
+            else {
+                    r = 255, g = 255, b = 254;
+                    ModifyMenu(iconPopupMenu, 1, MF_BYPOSITION, ID_COLORSET, L"黑色");
+                    //UpdateWindow(hWnd);
+            }
+            //RedrawWindow(OSStatic, NULL, NULL, NULL);
+            SendMessage(hWnd, WM_PAINT, 1, NULL);
+            SendMessage(hWnd, WM_PAINT, 2, NULL);
+            }
             if (xx == ID_EXIT) { PostMessage(hWnd, WM_DESTROY, NULL, NULL); }
             //MessageBox(hwnd, TEXT("右键"), szAppName, MB_OK);
         }
@@ -653,6 +678,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {
+            aboutDialogOpened = false;
             EndDialog(hDlg, LOWORD(wParam));
             return (INT_PTR)TRUE;
         }
