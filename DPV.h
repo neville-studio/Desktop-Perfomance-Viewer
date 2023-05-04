@@ -7,6 +7,7 @@
 #include <netlistmgr.h>
 #include "performance.hpp"
 #include <shellapi.h>
+#include "locales/language.hpp"
 
 //class UPDATEINFOPARA {
 //	HWND hWnd;

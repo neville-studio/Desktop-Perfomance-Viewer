@@ -1,5 +1,6 @@
 #pragma once
 #include "common/common.h"
+#include "locales/language.hpp"
 string getOSFullName();
 BOOL closeWMI();
 string getCPUInformation();

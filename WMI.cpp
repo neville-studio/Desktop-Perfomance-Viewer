@@ -5,9 +5,8 @@ using namespace std;
 #include <Wbemidl.h>
 #include "WMI.h"
 #include <tchar.h>
-
 #pragma comment(lib, "wbemuuid.lib")
-
+Locales localesPack = Locales();
 //string getUBRVersion()
 //{
 //    if (IsWindows7SP1OrGreater())
@@ -264,16 +263,16 @@ string getCPUInformation()
         VariantInit(&vtProp);
         // Get the value of the Name property
         hr = pclsObj->Get(L"Name", 0, &vtProp, 0, 0);
-        result += "\t"+to_string(CPUCount) + "\xEF\xBC\x9A" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
+        result += "\t"+to_string(CPUCount) + localesPack.mh + wide_Char_To_Multi_Byte(vtProp.bstrVal);
         VariantClear(&vtProp);
         hr = pclsObj->Get(L"MaxClockSpeed", 0, &vtProp, 0, 0);
         result += " @"+to_string((int)vtProp.lVal/1000)+"."+ to_string((int)vtProp.lVal / 10 % 100)+"GHz";
         VariantClear(&vtProp);
         hr = pclsObj->Get(L"NumberOfCores", 0, &vtProp, 0, 0);
-        result += " " + to_string(vtProp.lVal) + " \xE6\xA0\xB8\xE5\xBF\x83";
+        result += " " + to_string(vtProp.lVal) + localesPack.CPUCoreLabel;
         VariantClear(&vtProp);
         hr = pclsObj->Get(L"NumberOfLogicalProcessors", 0, &vtProp, 0, 0);
-        result += " " + to_string(vtProp.lVal) + " \xE9\x80\xBB\xE8\xBE\x91\xE5\xA4\x84\xE7\x90\x86\xE5\x99\xA8";
+        result += " " + to_string(vtProp.lVal) + localesPack.CPULogicProcessorLabel;
         VariantClear(&vtProp);
         hr = pclsObj->Get(L"Description", 0, &vtProp, 0, 0);
         result += "\n\t\t"+wide_Char_To_Multi_Byte(vtProp.bstrVal) + "";
@@ -368,9 +367,9 @@ string getDiskInfo()
         result += "\t" + to_string(DiskCount) + "\xEF\xBC\x9A" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
         hr = pclsObj->Get(L"Size", 0, &vtProp, 0, 0);
         string capicaty = wide_Char_To_Multi_Byte(vtProp.bstrVal);
-        result += " \xE5\xAE\xB9\xE9\x87\x8F\xEF\xBC\x9A" + sizeToStr(atoll(capicaty.c_str()));
+        result += localesPack.capacityLabel + sizeToStr(atoll(capicaty.c_str()));
         hr = pclsObj->Get(L"Status", 0, &vtProp, 0, 0);
-        result +=  string(" \xE7\x8A\xB6\xE6\x80\x81\xEF\xBC\x9A") +wide_Char_To_Multi_Byte(vtProp.bstrVal);
+        result +=  localesPack.diskstatusLabel +wide_Char_To_Multi_Byte(vtProp.bstrVal);
         result += "\n";
         VariantClear(&vtProp);
         DiskCount++;
@@ -442,12 +441,12 @@ string getVideoDriverInfo()
         VariantInit(&vtProp);
         // Get the value of the Name property
         hr = pclsObj->Get(L"Caption", 0, &vtProp, 0, 0);
-        result += "\t" + to_string(videoDriverCount) + "\xEF\xBC\x9A" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
+        result += "\t" + to_string(videoDriverCount) + localesPack.mh + wide_Char_To_Multi_Byte(vtProp.bstrVal);
         VariantClear(&vtProp);
         hr = pclsObj->Get(L"VideoModeDescription", 0, &vtProp, 0, 0);
         //string capicaty = wide_Char_To_Multi_Byte(vtProp.bstrVal);
         if(vtProp.bstrVal!=NULL)
-        result += " \xE6\x98\xBE\xE7\xA4\xBA\xE6\xA8\xA1\xE5\xBC\x8F\xEF\xBC\x9A" + wide_Char_To_Multi_Byte( vtProp.bstrVal);
+        result += localesPack.displaymodeLabel + wide_Char_To_Multi_Byte( vtProp.bstrVal);
         result += "\n\t";
         VariantClear(&vtProp);
         videoDriverCount++;
@@ -524,7 +523,7 @@ string getConnectedNetworkDriverInfo()
                 result += "\t" + to_string(ConnectedNetworkDriverCount) + "\xEF\xBC\x9A" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
             VariantClear(&vtProp);
             hr = pclsObj->Get(L"IPAddress", 0, &vtProp, 0, 0);
-            result += "\n\t\t IP\xE5\x9C\xB0\xE5\x9D\x80\xEF\xBC\x9A";
+            result += localesPack.IPAddressLabel;
             //string capicaty = wide_Char_To_Multi_Byte(vtProp.bstrVal);
             if (vtProp.vt & (VT_ARRAY | VT_BSTR))
             {
@@ -547,7 +546,7 @@ string getConnectedNetworkDriverInfo()
                 result += "\n\t\t IP地址：" + wide_Char_To_Multi_Byte(vtProp.vt);*/
             VariantClear(&vtProp);
             hr = pclsObj->Get(L"DefaultIPGateWay", 0, &vtProp, 0, 0);
-            result += "\n\t\t \xE9\xBB\x98\xE8\xAE\xA4\xE7\xBD\x91\xE5\x85\xB3\xEF\xBC\x9A";
+            result += localesPack.defaultGatewayLabel;
 
             //string capicaty = wide_Char_To_Multi_Byte(vtProp.bstrVal);
             if (vtProp.vt & (VT_ARRAY | VT_BSTR))
@@ -572,7 +571,7 @@ string getConnectedNetworkDriverInfo()
             result += " 默认网关：" + wide_Char_To_Multi_Byte(vtProp.bstrVal);*/
             hr = pclsObj->Get(L"MACAddress", 0, &vtProp, 0, 0);
             if(vtProp.bstrVal!=NULL)
-            result += "\n\t\t MAC\xE5\x9C\xB0\xE5\x9D\x80\xEF\xBC\x9A" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
+            result += localesPack.MACLabel + wide_Char_To_Multi_Byte(vtProp.bstrVal);
             result += "\n";
             ConnectedNetworkDriverCount++;
 
@@ -616,7 +615,7 @@ string getMemoryInfo()
         pSvc->Release();
         pLoc->Release();
         CoUninitialize();
-        return "发生错误，代码：0x" + hres;               // Program has failed.
+        return "some error occured code: 0x" + hres;               // Program has failed.
     }
 
     // Step 7: -------------------------------------------------
@@ -641,7 +640,7 @@ string getMemoryInfo()
         VariantInit(&vtProp);
         // Get the value of the Name property
         hr = pclsObj->Get(L"Caption", 0, &vtProp, 0, 0);
-        result += "\t"+to_string(MemoryCount) + "\xEF\xBC\x9A" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
+        result += "\t"+to_string(MemoryCount) + localesPack.mh + wide_Char_To_Multi_Byte(vtProp.bstrVal);
         if (IsWindows10OrGreater()) {
             VariantClear(&vtProp);
             hr = pclsObj->Get(L"ConfiguredClockSpeed", 0, &vtProp, 0, 0);
@@ -721,11 +720,11 @@ string getOSFullName()
         result = wide_Char_To_Multi_Byte(vtProp.bstrVal);
         VariantClear(&vtProp);
         hr = pclsObj->Get(L"Version", 0, &vtProp, 0, 0);
-        result += "\xEF\xBC\x88\xE5\x86\x85\xE6\xA0\xB8\xE7\x89\x88\xE6\x9C\xAC\xEF\xBC\x9A" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
+        result += localesPack.kernalVersionlabel + wide_Char_To_Multi_Byte(vtProp.bstrVal);
         string ubr = QueryRegKey(L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", L"UBR");
         if (ubr.length()!=0)
             result += "."+QueryRegKey(L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", L"UBR");
-        result+="\xEF\xBC\x89";
+        result+= localesPack.khbh;
         VariantClear(&vtProp);
 
         pclsObj->Release();

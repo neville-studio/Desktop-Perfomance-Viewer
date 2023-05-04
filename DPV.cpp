@@ -28,6 +28,7 @@ HANDLE globalHeap;                              //堆
 HMENU iconPopupMenu;                                //弹出窗口信息。
 
 NOTIFYICONDATA nid = {};
+Locales locales1Pack = Locales();
 int r = 255, g = 255, b = 254;
 // 此代码模块中包含的函数的前向声明:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -146,32 +147,32 @@ void updateInfo(int param)
     HWND hWnd = hWndMain;
     INT16 findDevice = param;
     if (findDevice == -1) {
-        osVersion = "\xE6\x93\x8D\xE4\xBD\x9C\xE7\xB3\xBB\xE7\xBB\x9F\xE7\x89\x88\xE6\x9C\xAC\xEF\xBC\x9A" + getOSFullName();
+        osVersion = locales1Pack.OSVersionLabel + getOSFullName();
         //SetWindowText(OSStatic, deleteStr = multi_Byte_To_Wide_Char(osVersion));
         //MoveWindow(OSStatic, 0, 0, hWndSize.right - hWndSize.left, 22, TRUE);
         //delete[]deleteStr;
         //std::string CPUInfo;
-        CPUInfo = "CPU\xEF\xBC\x9A" + getCPUInformation();
+        CPUInfo = locales1Pack.CPULabel + getCPUInformation();
         //SetWindowText(CPUStatic, deleteStr = multi_Byte_To_Wide_Char(CPUInfo));
         //MoveWindow(CPUStatic, 0, 22, hWndSize.right - hWndSize.left, 44 * getCPUCount(), TRUE);
         //delete[] deleteStr;
         //std::string MemoryInfo;
-        MemoryInfo = "\xE5\x86\x85\xE5\xAD\x98\xEF\xBC\x9A" + getMemoryInfo();
+        MemoryInfo = locales1Pack.memoryLabel + getMemoryInfo();
         //SetWindowText(MemoryStatic, deleteStr = multi_Byte_To_Wide_Char(MemoryInfo));
         //MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount(), hWndSize.right - hWndSize.left, 22 * getMemoryCount(), TRUE);
         //delete[] deleteStr;
         //std::string VideoDriverInfo;
-        VideoDriverInfo = "\xE6\x98\xBE\xE5\x8D\xA1\xE4\xBF\xA1\xE6\x81\xAF\xEF\xBC\x9A" + getVideoDriverInfo();
+        VideoDriverInfo = locales1Pack.GPULabel + getVideoDriverInfo();
         //SetWindowText(VideoDriverStatic, deleteStr = multi_Byte_To_Wide_Char(VideoDriverInfo));
         //delete[] deleteStr;
         //MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
         //std::string DiskInfo;
-        DiskInfo = "\xE7\xA1\xAC\xE7\x9B\x98\xEF\xBC\x9A" + getDiskInfo();
+        DiskInfo = locales1Pack.DiskLabel + getDiskInfo();
         //SetWindowText(DiskStatic, deleteStr = multi_Byte_To_Wide_Char(DiskInfo));
         //delete[] deleteStr;
         // MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
         //std::string ConnectedNetworkInfo;
-        ConnectedNetworkInfo = "\xE5\xB7\xB2\xE8\xBF\x9E\xE6\x8E\xA5\xE7\x9A\x84\xE7\xBD\x91\xE5\x8D\xA1\xE4\xBF\xA1\xE6\x81\xAF\xEF\xBC\x9A\n" + getConnectedNetworkDriverInfo();
+        ConnectedNetworkInfo = locales1Pack.ConnectedNetworkCardLabel + getConnectedNetworkDriverInfo();
         //SetWindowText(ConnectedNetworkStatic, deleteStr = multi_Byte_To_Wide_Char(ConnectedNetworkInfo));
         //delete[] deleteStr;
 
@@ -186,7 +187,7 @@ void updateInfo(int param)
         //std::string ConnectedNetworkInfo;
         //std::string original;
         //wchar_t* deleteStr;
-        ConnectedNetworkInfo = "\xE5\xB7\xB2\xE8\xBF\x9E\xE6\x8E\xA5\xE7\x9A\x84\xE7\xBD\x91\xE5\x8D\xA1\xE4\xBF\xA1\xE6\x81\xAF\xEF\xBC\x9A\n" + getConnectedNetworkDriverInfo();
+        ConnectedNetworkInfo = locales1Pack.ConnectedNetworkCardLabel + getConnectedNetworkDriverInfo();
         /*int length = GetWindowTextLength(ConnectedNetworkStatic);
         wchar_t *wcctxt = new wchar_t[length+1];
         GetWindowText(ConnectedNetworkStatic, wcctxt, length+1);
@@ -211,14 +212,14 @@ void updateInfo(int param)
         string().swap(ConnectedNetworkInfo);*/
 
         //std::string VideoDriverInfo;
-        VideoDriverInfo = "\xE6\x98\xBE\xE5\x8D\xA1\xE4\xBF\xA1\xE6\x81\xAF\xEF\xBC\x9A" + getVideoDriverInfo();
+        VideoDriverInfo = locales1Pack.GPULabel + getVideoDriverInfo();
         
         //std::string DiskInfo;
-        DiskInfo = "\xE7\xA1\xAC\xE7\x9B\x98\xEF\xBC\x9A" + getDiskInfo();
+        DiskInfo = locales1Pack.DiskLabel + getDiskInfo();
         //string().swap(ConnectedNetworkInfo);
         // MoveWindow(MemoryStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount(), hWndSize.right - hWndSize.left, 22 * getDiskCount(), TRUE);
         //std::string ConnectedNetworkInfo;
-        ConnectedNetworkInfo = "\xE5\xB7\xB2\xE8\xBF\x9E\xE6\x8E\xA5\xE7\x9A\x84\xE7\xBD\x91\xE5\x8D\xA1\xE4\xBF\xA1\xE6\x81\xAF\xEF\xBC\x9A\n" + getConnectedNetworkDriverInfo();
+        ConnectedNetworkInfo = locales1Pack.ConnectedNetworkCardLabel + getConnectedNetworkDriverInfo();
         /*wchar_t* deleteStr;
         MoveWindow(ConnectedNetworkStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount(), hWndSize.right - hWndSize.left, 22 + 88 * getConnectedNetworkDriverCount(), TRUE);
         MoveWindow(VideoDriverStatic, 0, 22 + 44 * getCPUCount() + 22 * getMemoryCount() + 22 * getDiskCount(), hWndSize.right - hWndSize.left, 22 * getVideoDriverCount(), TRUE);
@@ -280,18 +281,21 @@ DWORD WINAPI updatePerf(LPVOID param)
         /*WCHAR out[128];
         swprintf_s(out, L"%lf\n", networkTran);
         OutputDebugString(out);*/
-        if(IsWindows8OrGreater())
-        swprintf_s(resultstr, L"资源使用率：\tCPU：%.2lf%%（%.2lf GHz）\t内存：%d MB 空闲\t网络活动：%.1f %cB/s", 
-            cpuITimesD, cpuNums / 1000, memoryAvail,
-            int(networkTran / 1024 / 1024) > 0 ? networkTran / 1024/1024: networkTran / 1024,
-            int(networkTran / 1024 / 1024) > 0?'M':'K');
-        else if(IsWindows7OrGreater())
-            swprintf_s(resultstr, L"资源使用率：\tCPU：%.2lf%%\t内存：%d MB 空闲\t网络活动：%.1f %cB/s",
+        
+        if (IsWindows8OrGreater())
+        {
+            swprintf_s(resultstr, locales1Pack.fmtWin8.c_str(),
+                cpuITimesD, cpuNums / 1000, memoryAvail,
+                int(networkTran / 1024 / 1024) > 0 ? networkTran / 1024 / 1024 : networkTran / 1024,
+                int(networkTran / 1024 / 1024) > 0 ? 'M' : 'K');
+        }
+        else if (IsWindows7OrGreater())
+            swprintf_s(resultstr, locales1Pack.fmtWin7.c_str(),
                 cpuITimesD, memoryAvail,
                 int(networkTran / 1024 / 1024) > 0 ? networkTran / 1024 / 1024 : networkTran / 1024,
                 int(networkTran / 1024 / 1024) > 0 ? 'M' : 'K');
         else 
-            swprintf_s(resultstr, L"资源使用率：\tCPU：%.2lf%%\t内存：%d MB 空闲",
+            swprintf_s(resultstr, locales1Pack.fmtVista.c_str(),
                 cpuITimesD, memoryAvail);
        PostMessage(hWndMain, WM_PAINT, (WPARAM)2, NULL);
     }
@@ -374,10 +378,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             OUT_CHARACTER_PRECIS, CLIP_CHARACTER_PRECIS, DEFAULT_QUALITY,
             FF_DONTCARE, TEXT("微软雅黑")
         );
-        MoveWindow(hWnd, workSpace.right / 2 - workSpace.left / 2, 50, workSpace.right - workSpace.left, workSpace.bottom - workSpace.top-50,TRUE);
+        MoveWindow(hWnd, workSpace.right / 2 - workSpace.left / 2, 50, workSpace.right / 3*2 - workSpace.left/3*2, workSpace.bottom - workSpace.top-50,TRUE);
         OSStatic = CreateWindow(
             L"static",			//静态文本框的类名
-            L"操作系统版本",		//控件的文本
+            L"",		//控件的文本
             WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
             0 /*X坐标*/, 0 /*Y坐标*/, workSpace.right/2-workSpace.left/2 /*宽度*/, 20 /*高度*/,
             hWnd,		 //父窗口句柄
@@ -394,7 +398,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         CPUInfo = "CPU：" + getCPUInformation();*/
         CPUStatic = CreateWindow(
             L"static",			//静态文本框的类名
-            L"CPU：",		//控件的文本
+            L"",		//控件的文本
             WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
             0 /*X坐标*/, 20 /*Y坐标*/, workSpace.right / 2 - workSpace.left / 2 /*宽度*/, 44*getCPUCount() /*高度*/,
             hWnd,		 //父窗口句柄
@@ -409,7 +413,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         //MemoryInfo = "内存：" + getMemoryInfo();
         MemoryStatic = CreateWindow(
             L"static",			//静态文本框的类名
-            L"内存：",		//控件的文本
+            L"",		//控件的文本
             WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
             0 /*X坐标*/, 20+(44*getCPUCount()) /*Y坐标*/, workSpace.right / 2 - workSpace.left / 2 /*宽度*/,  22*getMemoryCount()/*高度*/,
             hWnd,		 //父窗口句柄
@@ -425,7 +429,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         //DiskInfo = "硬盘：" + getDiskInfo();
         DiskStatic = CreateWindow(
             L"static",			//静态文本框的类名
-            L"硬盘：",		//控件的文本
+            L"",		//控件的文本
             WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
             0 /*X坐标*/, 20 + (44 * getCPUCount())+ 22*getMemoryCount() /*Y坐标*/, workSpace.right / 2 - workSpace.left / 2 /*宽度*/, 22 * getDiskCount()/*高度*/,
             hWnd,		 //父窗口句柄
@@ -441,7 +445,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         //VideoDriverInfo = "显卡信息：" + getVideoDriverInfo();
         VideoDriverStatic = CreateWindow(
             L"static",			//静态文本框的类名
-            L"显卡信息：",		//控件的文本
+            L"",		//控件的文本
             WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
             0 /*X坐标*/, 20 + (44 * getCPUCount()) + 22 * getMemoryCount()+22*getDiskCount() /*Y坐标*/, workSpace.right / 2 - workSpace.left / 2 /*宽度*/, 22 * getVideoDriverCount()/*高度*/,
             hWnd,		 //父窗口句柄
@@ -457,7 +461,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         //ConnectedNetworkInfo = "已连接的网卡信息：\n" + getConnectedNetworkDriverInfo();
         ConnectedNetworkStatic = CreateWindow(
             L"static",			//静态文本框的类名
-            L"显卡信息：",		//控件的文本
+            L"",		//控件的文本
             WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
             0 /*X坐标*/, 20 + (44 * getCPUCount()) + 22 * getMemoryCount() + 22 * getDiskCount()+ 22 * getVideoDriverCount()
             /*Y坐标*/, workSpace.right / 2 - workSpace.left / 2 /*宽度*/, 22 + 88 * getConnectedNetworkDriverCount()/*高度*/,
@@ -472,7 +476,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         performanceStatic = CreateWindow(
             L"static",			//静态文本框的类名
-            L"性能信息：",		//控件的文本
+            L"",		//控件的文本
             WS_CHILD /*子窗口*/ | WS_VISIBLE /*创建时显示*/ | SS_LEFT /*水平居中*/  /*垂直居中*/,
             0 /*X坐标*/, 20 + (44 * getCPUCount()) + 22 * getMemoryCount() + 22 * getDiskCount() + 22 * getVideoDriverCount() + 22 + 88 * getConnectedNetworkDriverCount()
             /*Y坐标*/, workSpace.right / 2 - workSpace.left / 2 /*宽度*/, 88/*高度*/,
@@ -509,16 +513,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         iconPopupMenu = CreatePopupMenu();//生成托盘菜单
         //为托盘菜单添加两个选项
         UINT WM_TASKBARCREATED = RegisterWindowMessage(TEXT("TaskbarCreated"));
-        AppendMenu(iconPopupMenu, MF_STRING, ID_ABOUT, TEXT("关于"));
-        AppendMenu(iconPopupMenu, MF_STRING, ID_COLORSET, TEXT("黑色"));
-        AppendMenu(iconPopupMenu, MF_STRING, ID_EXIT, TEXT("退出"));
+        AppendMenu(iconPopupMenu, MF_STRING, ID_ABOUT, locales1Pack.tip1);
+        AppendMenu(iconPopupMenu, MF_STRING, ID_COLORSET, locales1Pack.tip3);
+        AppendMenu(iconPopupMenu, MF_STRING, ID_EXIT, locales1Pack.tip4);
         Shell_NotifyIcon(NIM_ADD, &nid);
     }
     case WM_DISPLAYCHANGE:
     {
         RECT workSpace;
         SystemParametersInfo(SPI_GETWORKAREA, 0, (PVOID)&workSpace, 0);
-        MoveWindow(hWnd, workSpace.right / 2 - workSpace.left / 2, 50, workSpace.right - workSpace.left, workSpace.bottom - workSpace.top - 50, TRUE);
+        MoveWindow(hWnd, workSpace.right / 2 - workSpace.left / 2, 50, workSpace.right/3*2 - workSpace.left/3*2, workSpace.bottom - workSpace.top - 50, TRUE);
     }
     case WM_COMMAND:
         {
@@ -526,12 +530,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // 分析菜单选择:
             switch (wmId)
             {
-            case IDM_ABOUT:
+            /*case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
             case IDM_EXIT:
                 DestroyWindow(hWnd);
-                break;
+                break;*/
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
             }
@@ -633,12 +637,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             if (xx == ID_ABOUT && !aboutDialogOpened) { aboutDialogOpened = true; DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), NULL, About); }
             if (xx == ID_COLORSET) { if (r == 255 && g == 255 && b == 254) {
                 r = 0, g = 0, b = 0;
-                ModifyMenu(iconPopupMenu, 1, MF_BYPOSITION, ID_COLORSET, L"白色");
+                ModifyMenu(iconPopupMenu, 1, MF_BYPOSITION, ID_COLORSET, locales1Pack.tip2);
                 //UpdateWindow(hWnd);
             }
             else {
                     r = 255, g = 255, b = 254;
-                    ModifyMenu(iconPopupMenu, 1, MF_BYPOSITION, ID_COLORSET, L"黑色");
+                    ModifyMenu(iconPopupMenu, 1, MF_BYPOSITION, ID_COLORSET, locales1Pack.tip3);
                     //UpdateWindow(hWnd);
             }
             //RedrawWindow(OSStatic, NULL, NULL, NULL);
