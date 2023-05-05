@@ -364,7 +364,7 @@ string getDiskInfo()
         VariantInit(&vtProp);
         // Get the value of the Name property
         hr = pclsObj->Get(L"Caption", 0, &vtProp, 0, 0);
-        result += "\t" + to_string(DiskCount) + "\xEF\xBC\x9A" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
+        result += "\t" + to_string(DiskCount) + localesPack.mh + wide_Char_To_Multi_Byte(vtProp.bstrVal);
         hr = pclsObj->Get(L"Size", 0, &vtProp, 0, 0);
         string capicaty = wide_Char_To_Multi_Byte(vtProp.bstrVal);
         result += localesPack.capacityLabel + sizeToStr(atoll(capicaty.c_str()));
@@ -520,7 +520,7 @@ string getConnectedNetworkDriverInfo()
             VariantClear(&vtProp);
             hr = pclsObj->Get(L"Caption", 0, &vtProp, 0, 0);
             if (vtProp.bstrVal != NULL)
-                result += "\t" + to_string(ConnectedNetworkDriverCount) + "\xEF\xBC\x9A" + wide_Char_To_Multi_Byte(vtProp.bstrVal);
+                result += "\t" + to_string(ConnectedNetworkDriverCount) + localesPack.mh + wide_Char_To_Multi_Byte(vtProp.bstrVal);
             VariantClear(&vtProp);
             hr = pclsObj->Get(L"IPAddress", 0, &vtProp, 0, 0);
             result += localesPack.IPAddressLabel;

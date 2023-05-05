@@ -53,7 +53,7 @@ Locales::Locales()
 		displaymodeLabel = " Display: ";
 		capacityLabel = " size:";
 		diskstatusLabel = " Status:";
-		mh = ":";
+		mh = ": ";
 		khbh = ")";
 		wcscpy_s(tip1, L"About");
 		wcscpy_s(tip2, L"White");
