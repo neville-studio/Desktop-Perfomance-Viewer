@@ -276,6 +276,7 @@ string getCPUInformation()
         VariantClear(&vtProp);
         hr = pclsObj->Get(L"Description", 0, &vtProp, 0, 0);
         result += "\n\t\t"+wide_Char_To_Multi_Byte(vtProp.bstrVal) + "";
+        result += "\n";
         VariantClear(&vtProp);
         CPUCount++;
         pclsObj->Release();
@@ -447,7 +448,7 @@ string getVideoDriverInfo()
         //string capicaty = wide_Char_To_Multi_Byte(vtProp.bstrVal);
         if(vtProp.bstrVal!=NULL)
         result += localesPack.displaymodeLabel + wide_Char_To_Multi_Byte( vtProp.bstrVal);
-        result += "\n\t";
+        result += "\n";
         VariantClear(&vtProp);
         videoDriverCount++;
         pclsObj->Release();

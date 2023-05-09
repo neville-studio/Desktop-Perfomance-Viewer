@@ -632,7 +632,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (lParam == WM_RBUTTONDOWN)
         {
             GetCursorPos(&pt);//取鼠标坐标
-            //::SetForegroundWindow(hWnd);//解决在菜单外单击左键菜单不消失的问题
+            ::SetForegroundWindow(hWnd);//解决在菜单外单击左键菜单不消失的问题
             int xx = TrackPopupMenu(iconPopupMenu, TPM_RETURNCMD, pt.x, pt.y, NULL, hWnd, NULL);//显示菜单并获取选项ID
             if (xx == ID_ABOUT && !aboutDialogOpened) { aboutDialogOpened = true; DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), NULL, About); }
             if (xx == ID_COLORSET) { if (r == 255 && g == 255 && b == 254) {
@@ -651,6 +651,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             if (xx == ID_EXIT) { PostMessage(hWnd, WM_DESTROY, NULL, NULL); }
             //MessageBox(hwnd, TEXT("右键"), szAppName, MB_OK);
+            //xx=PopupMenu
+            
         }
         break;
     }
